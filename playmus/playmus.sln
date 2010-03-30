@@ -1,0 +1,30 @@
+Microsoft Visual Studio Solution File, Format Version 7.00
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "playmus", "playmus.vcproj", "{7E972CC9-C675-4410-9594-1B6FB0088BD6}"
+EndProject
+Global
+	GlobalSection(SolutionConfiguration) = preSolution
+		ConfigName.0 = Debug
+		ConfigName.1 = Profile
+		ConfigName.2 = Profile_FastCap
+		ConfigName.3 = Release
+		ConfigName.4 = Release_LTCG
+	EndGlobalSection
+	GlobalSection(ProjectDependencies) = postSolution
+	EndGlobalSection
+	GlobalSection(ProjectConfiguration) = postSolution
+		{7E972CC9-C675-4410-9594-1B6FB0088BD6}.Debug.ActiveCfg = Debug|Xbox
+		{7E972CC9-C675-4410-9594-1B6FB0088BD6}.Debug.Build.0 = Debug|Xbox
+		{7E972CC9-C675-4410-9594-1B6FB0088BD6}.Profile.ActiveCfg = Profile|Xbox
+		{7E972CC9-C675-4410-9594-1B6FB0088BD6}.Profile.Build.0 = Profile|Xbox
+		{7E972CC9-C675-4410-9594-1B6FB0088BD6}.Profile_FastCap.ActiveCfg = Profile_FastCap|Xbox
+		{7E972CC9-C675-4410-9594-1B6FB0088BD6}.Profile_FastCap.Build.0 = Profile_FastCap|Xbox
+		{7E972CC9-C675-4410-9594-1B6FB0088BD6}.Release.ActiveCfg = Release|Xbox
+		{7E972CC9-C675-4410-9594-1B6FB0088BD6}.Release.Build.0 = Release|Xbox
+		{7E972CC9-C675-4410-9594-1B6FB0088BD6}.Release_LTCG.ActiveCfg = Release_LTCG|Xbox
+		{7E972CC9-C675-4410-9594-1B6FB0088BD6}.Release_LTCG.Build.0 = Release_LTCG|Xbox
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+	EndGlobalSection
+	GlobalSection(ExtensibilityAddIns) = postSolution
+	EndGlobalSection
+EndGlobal

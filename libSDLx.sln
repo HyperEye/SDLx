@@ -1,0 +1,116 @@
+Microsoft Visual Studio Solution File, Format Version 8.00
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libSDLx", "libSDLx.vcproj", "{22A15CB5-69B1-4145-A7BC-5DFE39C805AF}"
+	ProjectSection(ProjectDependencies) = postProject
+		{4C2C0A26-3834-4491-9634-CC920FEF9D03} = {4C2C0A26-3834-4491-9634-CC920FEF9D03}
+		{51455757-140E-4492-BA81-E640678D5B7A} = {51455757-140E-4492-BA81-E640678D5B7A}
+		{56E120B2-0332-44BB-8D3F-8262AB9F4E47} = {56E120B2-0332-44BB-8D3F-8262AB9F4E47}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mikmod", "mikmod\mikmod.vcproj", "{4C2C0A26-3834-4491-9634-CC920FEF9D03}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "timidity", "timidity\timidity.vcproj", "{51455757-140E-4492-BA81-E640678D5B7A}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libOggX", "vorbis\lib\libOggX.vcproj", "{C9912AED-6D14-4751-90BA-F221AB4D2A37}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libVorbisFileX", "vorbis\lib\libVorbisFileX.vcproj", "{F9DE3C5A-4FF8-43CC-84CB-2D32BF431266}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libVorbisX", "vorbis\lib\libVorbisX.vcproj", "{56E120B2-0332-44BB-8D3F-8262AB9F4E47}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfiguration) = preSolution
+		Debug = Debug
+		Profile = Profile
+		Profile_FastCap = Profile_FastCap
+		Release = Release
+		Release_LTCG = Release_LTCG
+		Xbox Singled Threaded = Xbox Singled Threaded
+	EndGlobalSection
+	GlobalSection(ProjectConfiguration) = postSolution
+		{22A15CB5-69B1-4145-A7BC-5DFE39C805AF}.Debug.ActiveCfg = Debug|Xbox
+		{22A15CB5-69B1-4145-A7BC-5DFE39C805AF}.Debug.Build.0 = Debug|Xbox
+		{22A15CB5-69B1-4145-A7BC-5DFE39C805AF}.Profile.ActiveCfg = Profile|Xbox
+		{22A15CB5-69B1-4145-A7BC-5DFE39C805AF}.Profile.Build.0 = Profile|Xbox
+		{22A15CB5-69B1-4145-A7BC-5DFE39C805AF}.Profile_FastCap.ActiveCfg = Profile_FastCap|Xbox
+		{22A15CB5-69B1-4145-A7BC-5DFE39C805AF}.Profile_FastCap.Build.0 = Profile_FastCap|Xbox
+		{22A15CB5-69B1-4145-A7BC-5DFE39C805AF}.Release.ActiveCfg = Release|Xbox
+		{22A15CB5-69B1-4145-A7BC-5DFE39C805AF}.Release.Build.0 = Release|Xbox
+		{22A15CB5-69B1-4145-A7BC-5DFE39C805AF}.Release_LTCG.ActiveCfg = Release_LTCG|Xbox
+		{22A15CB5-69B1-4145-A7BC-5DFE39C805AF}.Release_LTCG.Build.0 = Release_LTCG|Xbox
+		{22A15CB5-69B1-4145-A7BC-5DFE39C805AF}.Xbox Singled Threaded.ActiveCfg = Xbox Singled Threaded|Xbox
+		{22A15CB5-69B1-4145-A7BC-5DFE39C805AF}.Xbox Singled Threaded.Build.0 = Xbox Singled Threaded|Xbox
+		{4C2C0A26-3834-4491-9634-CC920FEF9D03}.Debug.ActiveCfg = Debug|Xbox
+		{4C2C0A26-3834-4491-9634-CC920FEF9D03}.Debug.Build.0 = Debug|Xbox
+		{4C2C0A26-3834-4491-9634-CC920FEF9D03}.Profile.ActiveCfg = Profile|Xbox
+		{4C2C0A26-3834-4491-9634-CC920FEF9D03}.Profile.Build.0 = Profile|Xbox
+		{4C2C0A26-3834-4491-9634-CC920FEF9D03}.Profile_FastCap.ActiveCfg = Profile_FastCap|Xbox
+		{4C2C0A26-3834-4491-9634-CC920FEF9D03}.Profile_FastCap.Build.0 = Profile_FastCap|Xbox
+		{4C2C0A26-3834-4491-9634-CC920FEF9D03}.Release.ActiveCfg = Release|Xbox
+		{4C2C0A26-3834-4491-9634-CC920FEF9D03}.Release.Build.0 = Release|Xbox
+		{4C2C0A26-3834-4491-9634-CC920FEF9D03}.Release_LTCG.ActiveCfg = Release_LTCG|Xbox
+		{4C2C0A26-3834-4491-9634-CC920FEF9D03}.Release_LTCG.Build.0 = Release_LTCG|Xbox
+		{4C2C0A26-3834-4491-9634-CC920FEF9D03}.Xbox Singled Threaded.ActiveCfg = Release_LTCG|Xbox
+		{4C2C0A26-3834-4491-9634-CC920FEF9D03}.Xbox Singled Threaded.Build.0 = Release_LTCG|Xbox
+		{51455757-140E-4492-BA81-E640678D5B7A}.Debug.ActiveCfg = Debug|Xbox
+		{51455757-140E-4492-BA81-E640678D5B7A}.Debug.Build.0 = Debug|Xbox
+		{51455757-140E-4492-BA81-E640678D5B7A}.Profile.ActiveCfg = Profile|Xbox
+		{51455757-140E-4492-BA81-E640678D5B7A}.Profile.Build.0 = Profile|Xbox
+		{51455757-140E-4492-BA81-E640678D5B7A}.Profile_FastCap.ActiveCfg = Profile_FastCap|Xbox
+		{51455757-140E-4492-BA81-E640678D5B7A}.Profile_FastCap.Build.0 = Profile_FastCap|Xbox
+		{51455757-140E-4492-BA81-E640678D5B7A}.Release.ActiveCfg = Release|Xbox
+		{51455757-140E-4492-BA81-E640678D5B7A}.Release.Build.0 = Release|Xbox
+		{51455757-140E-4492-BA81-E640678D5B7A}.Release_LTCG.ActiveCfg = Release_LTCG|Xbox
+		{51455757-140E-4492-BA81-E640678D5B7A}.Release_LTCG.Build.0 = Release_LTCG|Xbox
+		{51455757-140E-4492-BA81-E640678D5B7A}.Xbox Singled Threaded.ActiveCfg = Release_LTCG|Xbox
+		{51455757-140E-4492-BA81-E640678D5B7A}.Xbox Singled Threaded.Build.0 = Release_LTCG|Xbox
+		{C9912AED-6D14-4751-90BA-F221AB4D2A37}.Debug.ActiveCfg = Debug|Xbox
+		{C9912AED-6D14-4751-90BA-F221AB4D2A37}.Debug.Build.0 = Debug|Xbox
+		{C9912AED-6D14-4751-90BA-F221AB4D2A37}.Profile.ActiveCfg = Profile|Xbox
+		{C9912AED-6D14-4751-90BA-F221AB4D2A37}.Profile.Build.0 = Profile|Xbox
+		{C9912AED-6D14-4751-90BA-F221AB4D2A37}.Profile_FastCap.ActiveCfg = Profile_FastCap|Xbox
+		{C9912AED-6D14-4751-90BA-F221AB4D2A37}.Profile_FastCap.Build.0 = Profile_FastCap|Xbox
+		{C9912AED-6D14-4751-90BA-F221AB4D2A37}.Release.ActiveCfg = Release|Xbox
+		{C9912AED-6D14-4751-90BA-F221AB4D2A37}.Release.Build.0 = Release|Xbox
+		{C9912AED-6D14-4751-90BA-F221AB4D2A37}.Release_LTCG.ActiveCfg = Release_LTCG|Xbox
+		{C9912AED-6D14-4751-90BA-F221AB4D2A37}.Release_LTCG.Build.0 = Release_LTCG|Xbox
+		{C9912AED-6D14-4751-90BA-F221AB4D2A37}.Xbox Singled Threaded.ActiveCfg = Release_LTCG|Xbox
+		{C9912AED-6D14-4751-90BA-F221AB4D2A37}.Xbox Singled Threaded.Build.0 = Release_LTCG|Xbox
+		{F9DE3C5A-4FF8-43CC-84CB-2D32BF431266}.Debug.ActiveCfg = Debug|Xbox
+		{F9DE3C5A-4FF8-43CC-84CB-2D32BF431266}.Debug.Build.0 = Debug|Xbox
+		{F9DE3C5A-4FF8-43CC-84CB-2D32BF431266}.Profile.ActiveCfg = Profile|Xbox
+		{F9DE3C5A-4FF8-43CC-84CB-2D32BF431266}.Profile.Build.0 = Profile|Xbox
+		{F9DE3C5A-4FF8-43CC-84CB-2D32BF431266}.Profile_FastCap.ActiveCfg = Profile_FastCap|Xbox
+		{F9DE3C5A-4FF8-43CC-84CB-2D32BF431266}.Profile_FastCap.Build.0 = Profile_FastCap|Xbox
+		{F9DE3C5A-4FF8-43CC-84CB-2D32BF431266}.Release.ActiveCfg = Release|Xbox
+		{F9DE3C5A-4FF8-43CC-84CB-2D32BF431266}.Release.Build.0 = Release|Xbox
+		{F9DE3C5A-4FF8-43CC-84CB-2D32BF431266}.Release_LTCG.ActiveCfg = Release_LTCG|Xbox
+		{F9DE3C5A-4FF8-43CC-84CB-2D32BF431266}.Release_LTCG.Build.0 = Release_LTCG|Xbox
+		{F9DE3C5A-4FF8-43CC-84CB-2D32BF431266}.Xbox Singled Threaded.ActiveCfg = Release_LTCG|Xbox
+		{F9DE3C5A-4FF8-43CC-84CB-2D32BF431266}.Xbox Singled Threaded.Build.0 = Release_LTCG|Xbox
+		{56E120B2-0332-44BB-8D3F-8262AB9F4E47}.Debug.ActiveCfg = Debug|Xbox
+		{56E120B2-0332-44BB-8D3F-8262AB9F4E47}.Debug.Build.0 = Debug|Xbox
+		{56E120B2-0332-44BB-8D3F-8262AB9F4E47}.Profile.ActiveCfg = Profile|Xbox
+		{56E120B2-0332-44BB-8D3F-8262AB9F4E47}.Profile.Build.0 = Profile|Xbox
+		{56E120B2-0332-44BB-8D3F-8262AB9F4E47}.Profile_FastCap.ActiveCfg = Profile_FastCap|Xbox
+		{56E120B2-0332-44BB-8D3F-8262AB9F4E47}.Profile_FastCap.Build.0 = Profile_FastCap|Xbox
+		{56E120B2-0332-44BB-8D3F-8262AB9F4E47}.Release.ActiveCfg = Release|Xbox
+		{56E120B2-0332-44BB-8D3F-8262AB9F4E47}.Release.Build.0 = Release|Xbox
+		{56E120B2-0332-44BB-8D3F-8262AB9F4E47}.Release_LTCG.ActiveCfg = Release_LTCG|Xbox
+		{56E120B2-0332-44BB-8D3F-8262AB9F4E47}.Release_LTCG.Build.0 = Release_LTCG|Xbox
+		{56E120B2-0332-44BB-8D3F-8262AB9F4E47}.Xbox Singled Threaded.ActiveCfg = Release_LTCG|Xbox
+		{56E120B2-0332-44BB-8D3F-8262AB9F4E47}.Xbox Singled Threaded.Build.0 = Release_LTCG|Xbox
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+	EndGlobalSection
+	GlobalSection(ExtensibilityAddIns) = postSolution
+	EndGlobalSection
+EndGlobal

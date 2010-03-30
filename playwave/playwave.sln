@@ -1,0 +1,30 @@
+Microsoft Visual Studio Solution File, Format Version 7.00
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "playwave", "playwave.vcproj", "{F9B68B3B-6842-458F-9365-D4EAA9B6D397}"
+EndProject
+Global
+	GlobalSection(SolutionConfiguration) = preSolution
+		ConfigName.0 = Debug
+		ConfigName.1 = Profile
+		ConfigName.2 = Profile_FastCap
+		ConfigName.3 = Release
+		ConfigName.4 = Release_LTCG
+	EndGlobalSection
+	GlobalSection(ProjectDependencies) = postSolution
+	EndGlobalSection
+	GlobalSection(ProjectConfiguration) = postSolution
+		{F9B68B3B-6842-458F-9365-D4EAA9B6D397}.Debug.ActiveCfg = Debug|Xbox
+		{F9B68B3B-6842-458F-9365-D4EAA9B6D397}.Debug.Build.0 = Debug|Xbox
+		{F9B68B3B-6842-458F-9365-D4EAA9B6D397}.Profile.ActiveCfg = Profile|Xbox
+		{F9B68B3B-6842-458F-9365-D4EAA9B6D397}.Profile.Build.0 = Profile|Xbox
+		{F9B68B3B-6842-458F-9365-D4EAA9B6D397}.Profile_FastCap.ActiveCfg = Profile_FastCap|Xbox
+		{F9B68B3B-6842-458F-9365-D4EAA9B6D397}.Profile_FastCap.Build.0 = Profile_FastCap|Xbox
+		{F9B68B3B-6842-458F-9365-D4EAA9B6D397}.Release.ActiveCfg = Release|Xbox
+		{F9B68B3B-6842-458F-9365-D4EAA9B6D397}.Release.Build.0 = Release|Xbox
+		{F9B68B3B-6842-458F-9365-D4EAA9B6D397}.Release_LTCG.ActiveCfg = Release_LTCG|Xbox
+		{F9B68B3B-6842-458F-9365-D4EAA9B6D397}.Release_LTCG.Build.0 = Release_LTCG|Xbox
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+	EndGlobalSection
+	GlobalSection(ExtensibilityAddIns) = postSolution
+	EndGlobalSection
+EndGlobal
