@@ -400,7 +400,7 @@ static int XBOX_RenderSurface(_THIS, SDL_Surface *surface)
 	v[0].tu = 0;
 	v[0].tv = 0;
 
-	b.x = cal_xoffset + 640 + cal_xstretch;
+	b.x = cal_xoffset + D3D_PP.BackBufferWidth + cal_xstretch;
 	b.y = cal_yoffset;
 	b.z = 0;
 	b.w = 0;
@@ -410,8 +410,8 @@ static int XBOX_RenderSurface(_THIS, SDL_Surface *surface)
 	v[1].tu = (float)desc.Width-1;
 	v[1].tv = 0;
 
-	c.x = cal_xoffset + 640 + cal_xstretch;;
-	c.y = cal_yoffset + 480 + cal_ystretch;;
+	c.x = cal_xoffset + D3D_PP.BackBufferWidth + cal_xstretch;;
+	c.y = cal_yoffset + D3D_PP.BackBufferHeight + cal_ystretch;;
 	c.z = 0;
 	c.w = 0;
 
@@ -421,7 +421,7 @@ static int XBOX_RenderSurface(_THIS, SDL_Surface *surface)
 	v[2].tv = (float)desc.Height-1;
 
 	d.x = cal_xoffset;
-	d.y = cal_yoffset + 480 + cal_ystretch;
+	d.y = cal_yoffset + D3D_PP.BackBufferHeight + cal_ystretch;
 	d.z = 0;
 	d.w = 0;
 
@@ -550,7 +550,7 @@ static void XBOX_UpdateRects(_THIS, int numrects, SDL_Rect *rects)
 	v[0].tu = 0;
 	v[0].tv = 0;
 
-	b.x = cal_xoffset + 640 + cal_xstretch;
+	b.x = cal_xoffset + D3D_PP.BackBufferWidth + cal_xstretch;
 	b.y = cal_yoffset;
 	b.z = 0;
 	b.w = 0;
@@ -560,8 +560,8 @@ static void XBOX_UpdateRects(_THIS, int numrects, SDL_Rect *rects)
 	v[1].tu = (float)desc.Width-1;
 	v[1].tv = 0;
 
-	c.x = cal_xoffset + 640 + cal_xstretch;;
-	c.y = cal_yoffset + 480 + cal_ystretch;;
+	c.x = cal_xoffset + D3D_PP.BackBufferWidth + cal_xstretch;;
+	c.y = cal_yoffset + D3D_PP.BackBufferHeight + cal_ystretch;;
 	c.z = 0;
 	c.w = 0;
 
@@ -571,7 +571,7 @@ static void XBOX_UpdateRects(_THIS, int numrects, SDL_Rect *rects)
 	v[2].tv = (float)desc.Height-1;
 
 	d.x = cal_xoffset;
-	d.y = cal_yoffset + 480 + cal_ystretch;
+	d.y = cal_yoffset + D3D_PP.BackBufferHeight + cal_ystretch;
 	d.z = 0;
 	d.w = 0;
 
