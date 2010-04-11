@@ -62,6 +62,7 @@ typedef struct VERTEX { D3DXVECTOR4 p; D3DCOLOR vbColor; FLOAT tu, tv; } SDL_Ver
 
 /* Initialization/Query functions */
 static int XBOX_VideoInit(_THIS, SDL_PixelFormat *vformat);
+static int XBOX_BuildListModes();
 static SDL_Rect **XBOX_ListModes(_THIS, SDL_PixelFormat *format, Uint32 flags);
 static SDL_Surface *XBOX_SetVideoMode(_THIS, SDL_Surface *current, int width, int height, int bpp, Uint32 flags);
 static int XBOX_SetColors(_THIS, int firstcolor, int ncolors, SDL_Color *colors);
@@ -81,7 +82,17 @@ static int XBOX_SetHWColorKey(_THIS, SDL_Surface *surface, Uint32 key);
 static int XBOX_SetFlickerFilter(_THIS, SDL_Surface *surface, int filter);
 static int XBOX_SetSoftDisplayFilter(_THIS, SDL_Surface *surface, int enabled);
 
-
+const static SDL_Rect
+	RECT_1920x1080 = {0,0,1920,1080},
+	RECT_1280x720 = {0,0,1280,720},
+	RECT_800x600 = {0,0,800,600},
+	RECT_720x480 = {0,0,720,480},
+	RECT_640x480 = {0,0,640,480},
+	RECT_512x384 = {0,0,512,384},
+	RECT_400x300 = {0,0,400,300},
+	RECT_320x240 = {0,0,320,240},
+	RECT_320x200 = {0,0,320,200};
+const static SDL_Rect **vid_modes;
 
 /* XBOX screen calibration variables */
 float cal_xoffset = 0;
@@ -204,22 +215,33 @@ VideoBootStrap XBOX_bootstrap = {
 
 int XBOX_VideoInit(_THIS, SDL_PixelFormat *vformat)
 {
+	DWORD vidflags;
+
+	if(XBOX_BuildListModes() <= 0)
+	{
+		SDL_SetError("No modes available");
+		return 0;
+	}
+
 	if (!D3D)
 		D3D = Direct3DCreate8(D3D_SDK_VERSION);
 
 	ZeroMemory(&D3D_PP,sizeof(D3D_PP));
 
+	vidflags = XGetVideoFlags();
+
 	if(XGetVideoStandard() == XC_VIDEO_STANDARD_PAL_I)	// PAL user
 	{
-		//get supported video flags
-
-		DWORD videoFlags = XGetVideoFlags();
-
-		if(videoFlags & XC_VIDEO_FLAGS_PAL_60Hz)		// PAL 60 user
+		if(vidflags & XC_VIDEO_FLAGS_PAL_60Hz)		// PAL 60 user
 			D3D_PP.FullScreen_RefreshRateInHz = 60;
 		else
 			D3D_PP.FullScreen_RefreshRateInHz = 50;
 	}
+
+	if(vidflags & XC_VIDEO_FLAGS_HDTV_480p)
+		D3D_PP.Flags = D3DPRESENTFLAG_PROGRESSIVE;
+	else
+		D3D_PP.Flags = D3DPRESENTFLAG_INTERLACED;
 
 	D3D_PP.BackBufferWidth = 640;
 	D3D_PP.BackBufferHeight = 480;
@@ -248,27 +270,59 @@ int XBOX_VideoInit(_THIS, SDL_PixelFormat *vformat)
 		return (0);
 }
 
-const static SDL_Rect
-	RECT_800x600 = {0,0,800,600},
-	RECT_640x480 = {0,0,640,480},
-	RECT_512x384 = {0,0,512,384},
-	RECT_400x300 = {0,0,400,300},
-	RECT_320x240 = {0,0,320,240},
-	RECT_320x200 = {0,0,320,200};
-const static SDL_Rect *vid_modes[] = {
-	&RECT_800x600,
-	&RECT_640x480,
-	&RECT_512x384,
-	&RECT_400x300,
-	&RECT_320x240,
-	&RECT_320x200,
-	NULL
-};
+int XBOX_BuildListModes()
+{
+	DWORD vidflags;
+	int   i = -1;
 
+	if(vid_modes)
+		return -1;
+
+	vid_modes = (SDL_Rect **)malloc(sizeof(SDL_Rect *));
+
+	if(!vid_modes)
+	{
+		SDL_SetError("Couldn't allocate list modes");
+		return -1;
+	}
+
+	vidflags = XGetVideoFlags();
+
+	if(vidflags & XC_VIDEO_FLAGS_HDTV_1080i)
+	{
+		vid_modes[++i] = &RECT_1920x1080;
+		vid_modes = (SDL_Rect **)realloc((void *)vid_modes, sizeof(SDL_Rect *) * (i + 2));
+	}
+
+	if(vidflags & XC_VIDEO_FLAGS_HDTV_720p)
+	{
+		vid_modes[++i] = &RECT_1280x720;
+		vid_modes = (SDL_Rect **)realloc((void *)vid_modes, sizeof(SDL_Rect) * (i + 2));
+	}
+
+	if(vidflags & XC_VIDEO_FLAGS_WIDESCREEN)
+	{
+		vid_modes[++i] = &RECT_720x480;
+		vid_modes = (SDL_Rect **)realloc((void *)vid_modes, sizeof(SDL_Rect) * (i + 2));
+	}
+
+	vid_modes = (SDL_Rect **)realloc((void *)vid_modes, sizeof(SDL_Rect) * (i + 8));
+
+	vid_modes[++i] = &RECT_800x600;
+	vid_modes[++i] = &RECT_640x480;
+	vid_modes[++i] = &RECT_512x384;
+	vid_modes[++i] = &RECT_400x300;
+	vid_modes[++i] = &RECT_320x240;
+	vid_modes[++i] = &RECT_320x200;
+
+	vid_modes[++i] = NULL;
+
+	return i;
+}
 
 SDL_Rect **XBOX_ListModes(_THIS, SDL_PixelFormat *format, Uint32 flags)
 {
-	return &vid_modes;
+	return (SDL_Rect **)vid_modes;
 }
 
 SDL_Surface *XBOX_SetVideoMode(_THIS, SDL_Surface *current,
@@ -277,6 +331,7 @@ SDL_Surface *XBOX_SetVideoMode(_THIS, SDL_Surface *current,
 
 	int pixel_mode,pitch;
 	Uint32 Rmask, Gmask, Bmask;
+	DWORD vidflags;
 
 	HRESULT ret;
 
@@ -308,6 +363,28 @@ SDL_Surface *XBOX_SetVideoMode(_THIS, SDL_Surface *current,
 			SDL_SetError("Couldn't find requested mode in list");
 			return(NULL);
 	}
+
+	vidflags = XGetVideoFlags();
+
+	if((width != 1920 && height != 1080) && ((width == 1280 && height == 720) || vidflags & XC_VIDEO_FLAGS_HDTV_480p))
+		D3D_PP.Flags = D3DPRESENTFLAG_PROGRESSIVE;
+	else
+		D3D_PP.Flags = D3DPRESENTFLAG_INTERLACED;
+
+	if(width > 640 && ((float)height / (float)width != 0.75)) // widescreen
+	{
+		D3D_PP.BackBufferWidth = width;
+		D3D_PP.BackBufferHeight = height;
+		D3D_PP.Flags |= D3DPRESENTFLAG_WIDESCREEN;
+	}
+	else
+	{
+		D3D_PP.BackBufferWidth = 640;
+		D3D_PP.BackBufferHeight = 480;
+	}
+
+	IDirect3DDevice8_Reset(D3D_Device, &D3D_PP);
+
 
 	/* Allocate the new pixel format for the screen */
 	if ( ! SDL_ReallocFormat(current, bpp, Rmask, Gmask, Bmask, 0) ) {
@@ -631,6 +708,9 @@ void XBOX_VideoQuit(_THIS)
 		IDirect3DTexture8_Release(this->hidden->SDL_primary);
 
 	 this->screen->pixels = NULL;
+
+	 if(vid_modes)
+		 free((void *)vid_modes);
 }
 
 static int XBOX_SetHWAlpha(_THIS, SDL_Surface *surface, Uint8 alpha)
