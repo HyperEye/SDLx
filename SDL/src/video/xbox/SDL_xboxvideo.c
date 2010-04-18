@@ -273,7 +273,7 @@ int XBOX_VideoInit(_THIS, SDL_PixelFormat *vformat)
 int XBOX_BuildListModes()
 {
 	DWORD vidflags;
-	int   i = -1;
+	int   i = 0;
 
 	if(vid_modes)
 		return -1;
@@ -290,32 +290,32 @@ int XBOX_BuildListModes()
 
 	if(vidflags & XC_VIDEO_FLAGS_HDTV_1080i)
 	{
-		vid_modes[++i] = &RECT_1920x1080;
-		vid_modes = (SDL_Rect **)realloc((void *)vid_modes, sizeof(SDL_Rect *) * (i + 2));
+		vid_modes[i++] = &RECT_1920x1080;
+		vid_modes = (SDL_Rect **)realloc((void *)vid_modes, sizeof(SDL_Rect *) * (i + 1));
 	}
 
 	if(vidflags & XC_VIDEO_FLAGS_HDTV_720p)
 	{
-		vid_modes[++i] = &RECT_1280x720;
-		vid_modes = (SDL_Rect **)realloc((void *)vid_modes, sizeof(SDL_Rect) * (i + 2));
+		vid_modes[i++] = &RECT_1280x720;
+		vid_modes = (SDL_Rect **)realloc((void *)vid_modes, sizeof(SDL_Rect) * (i + 1));
 	}
 
 	if(vidflags & XC_VIDEO_FLAGS_WIDESCREEN)
 	{
-		vid_modes[++i] = &RECT_720x480;
-		vid_modes = (SDL_Rect **)realloc((void *)vid_modes, sizeof(SDL_Rect) * (i + 2));
+		vid_modes[i++] = &RECT_720x480;
+		vid_modes = (SDL_Rect **)realloc((void *)vid_modes, sizeof(SDL_Rect) * (i + 1));
 	}
 
-	vid_modes = (SDL_Rect **)realloc((void *)vid_modes, sizeof(SDL_Rect) * (i + 8));
+	vid_modes = (SDL_Rect **)realloc((void *)vid_modes, sizeof(SDL_Rect) * (i + 7));
 
-	vid_modes[++i] = &RECT_800x600;
-	vid_modes[++i] = &RECT_640x480;
-	vid_modes[++i] = &RECT_512x384;
-	vid_modes[++i] = &RECT_400x300;
-	vid_modes[++i] = &RECT_320x240;
-	vid_modes[++i] = &RECT_320x200;
+	vid_modes[i++] = &RECT_800x600;
+	vid_modes[i++] = &RECT_640x480;
+	vid_modes[i++] = &RECT_512x384;
+	vid_modes[i++] = &RECT_400x300;
+	vid_modes[i++] = &RECT_320x240;
+	vid_modes[i++] = &RECT_320x200;
 
-	vid_modes[++i] = NULL;
+	vid_modes[i] = NULL;
 
 	return i;
 }
