@@ -1,1 +1,1 @@
-c:\masm611\bin\ml /coff /Zi /c /Flgvmat32.lst gvmat32.asm
+c:\masm32\bin\ml /coff /Zi /c /Flgvmat32.lst gvmat32.asm
