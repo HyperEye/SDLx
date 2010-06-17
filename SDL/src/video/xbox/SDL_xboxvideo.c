@@ -217,7 +217,7 @@ int XBOX_VideoInit(_THIS, SDL_PixelFormat *vformat)
 {
 	DWORD vidflags;
 
-	if(XBOX_BuildListModes() <= 0)
+	if(XBOX_BuildModesList() <= 0)
 	{
 		SDL_SetError("No modes available");
 		return 0;
@@ -270,7 +270,7 @@ int XBOX_VideoInit(_THIS, SDL_PixelFormat *vformat)
 		return (0);
 }
 
-int XBOX_BuildListModes()
+int XBOX_BuildModesList()
 {
 	DWORD vidflags;
 	int   i = 0;
@@ -282,7 +282,7 @@ int XBOX_BuildListModes()
 
 	if(!vid_modes)
 	{
-		SDL_SetError("Couldn't allocate list modes");
+		SDL_SetError("Couldn't allocate modes list");
 		return -1;
 	}
 
@@ -297,16 +297,16 @@ int XBOX_BuildListModes()
 	if(vidflags & XC_VIDEO_FLAGS_HDTV_720p)
 	{
 		vid_modes[i++] = &RECT_1280x720;
-		vid_modes = (SDL_Rect **)realloc((void *)vid_modes, sizeof(SDL_Rect) * (i + 1));
+		vid_modes = (SDL_Rect **)realloc((void *)vid_modes, sizeof(SDL_Rect *) * (i + 1));
 	}
 
 	if(vidflags & XC_VIDEO_FLAGS_WIDESCREEN)
 	{
 		vid_modes[i++] = &RECT_720x480;
-		vid_modes = (SDL_Rect **)realloc((void *)vid_modes, sizeof(SDL_Rect) * (i + 1));
+		vid_modes = (SDL_Rect **)realloc((void *)vid_modes, sizeof(SDL_Rect *) * (i + 1));
 	}
 
-	vid_modes = (SDL_Rect **)realloc((void *)vid_modes, sizeof(SDL_Rect) * (i + 7));
+	vid_modes = (SDL_Rect **)realloc((void *)vid_modes, sizeof(SDL_Rect *) * (i + 7));
 
 	vid_modes[i++] = &RECT_800x600;
 	vid_modes[i++] = &RECT_640x480;
