@@ -303,7 +303,7 @@ int XBOX_BuildModesList()
 
 	if(vidflags & XC_VIDEO_FLAGS_WIDESCREEN)
 	{
-		if(vidflags & XC_VIDEO_STANDARD_PAL_I)
+		if(XGetVideoStandard() == XC_VIDEO_STANDARD_PAL_I)
 			vid_modes[i++] = &RECT_720x576;
 		else
 			vid_modes[i++] = &RECT_720x480;
