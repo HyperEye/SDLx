@@ -62,7 +62,7 @@ typedef struct VERTEX { D3DXVECTOR4 p; D3DCOLOR vbColor; FLOAT tu, tv; } SDL_Ver
 
 /* Initialization/Query functions */
 static int XBOX_VideoInit(_THIS, SDL_PixelFormat *vformat);
-static int XBOX_BuildListModes();
+static int XBOX_BuildModesList();
 static SDL_Rect **XBOX_ListModes(_THIS, SDL_PixelFormat *format, Uint32 flags);
 static SDL_Surface *XBOX_SetVideoMode(_THIS, SDL_Surface *current, int width, int height, int bpp, Uint32 flags);
 static int XBOX_SetColors(_THIS, int firstcolor, int ncolors, SDL_Color *colors);
@@ -86,6 +86,7 @@ const static SDL_Rect
 	RECT_1920x1080 = {0,0,1920,1080},
 	RECT_1280x720 = {0,0,1280,720},
 	RECT_800x600 = {0,0,800,600},
+	RECT_720x576 = {0,0,720,576},
 	RECT_720x480 = {0,0,720,480},
 	RECT_640x480 = {0,0,640,480},
 	RECT_512x384 = {0,0,512,384},
@@ -230,6 +231,11 @@ int XBOX_VideoInit(_THIS, SDL_PixelFormat *vformat)
 
 	vidflags = XGetVideoFlags();
 
+	if(vidflags & XC_VIDEO_FLAGS_HDTV_480p)
+		D3D_PP.Flags = D3DPRESENTFLAG_PROGRESSIVE;
+	else
+		D3D_PP.Flags = D3DPRESENTFLAG_INTERLACED;
+
 	if(XGetVideoStandard() == XC_VIDEO_STANDARD_PAL_I)	// PAL user
 	{
 		if(vidflags & XC_VIDEO_FLAGS_PAL_60Hz)		// PAL 60 user
@@ -237,11 +243,6 @@ int XBOX_VideoInit(_THIS, SDL_PixelFormat *vformat)
 		else
 			D3D_PP.FullScreen_RefreshRateInHz = 50;
 	}
-
-	if(vidflags & XC_VIDEO_FLAGS_HDTV_480p)
-		D3D_PP.Flags = D3DPRESENTFLAG_PROGRESSIVE;
-	else
-		D3D_PP.Flags = D3DPRESENTFLAG_INTERLACED;
 
 	D3D_PP.BackBufferWidth = 640;
 	D3D_PP.BackBufferHeight = 480;
@@ -302,7 +303,10 @@ int XBOX_BuildModesList()
 
 	if(vidflags & XC_VIDEO_FLAGS_WIDESCREEN)
 	{
-		vid_modes[i++] = &RECT_720x480;
+		if(vidflags & XC_VIDEO_STANDARD_PAL_I)
+			vid_modes[i++] = &RECT_720x576;
+		else
+			vid_modes[i++] = &RECT_720x480;
 		vid_modes = (SDL_Rect **)realloc((void *)vid_modes, sizeof(SDL_Rect *) * (i + 1));
 	}
 
@@ -371,7 +375,8 @@ SDL_Surface *XBOX_SetVideoMode(_THIS, SDL_Surface *current,
 	else
 		D3D_PP.Flags = D3DPRESENTFLAG_INTERLACED;
 
-	if(width > 640 && ((float)height / (float)width != 0.75)) // widescreen
+	if(width > 640 && ((float)height / (float)width != 0.75) ||
+	                        ((width == 720) && (height == 576))) // widescreen
 	{
 		D3D_PP.BackBufferWidth = width;
 		D3D_PP.BackBufferHeight = height;
