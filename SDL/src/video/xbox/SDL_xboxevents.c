@@ -352,11 +352,14 @@ static void mouse_update(void)
 {
 #ifndef _XBOX_DONT_USE_DEVICES
 
-	int i;
+	int i, j;
 	static int prev_buttons;
 	static int lastmouseX, lastmouseY;
+	static DWORD lastdwPacketNum;
+	DWORD dwPacketNum;
 	int mouseX, mouseY;
 	int buttons,changed;
+	int wheel;
 
 	const	static char sdl_mousebtn[] = {
 	XINPUT_DEBUG_MOUSE_LEFT_BUTTON,
@@ -374,16 +377,16 @@ static void mouse_update(void)
         {
             // Read the input state
             XInputGetState( g_hMouseDevice[i], &g_MouseStates[i] );
-			
+
 			mouseX = mouseY = 0;
+
+			dwPacketNum = g_MouseStates[i].dwPacketNumber;
 
             // Copy gamepad to local structure
             memcpy( &g_MouseInput, &g_MouseStates[i].DebugMouse, sizeof(XINPUT_MOUSE) );
 
-			if ((lastmouseX == g_MouseInput.cMickeysX) &&
-				(lastmouseY == g_MouseInput.cMickeysY))
-				mouseX = mouseY = 0;
-			else
+			if ((lastmouseX != g_MouseInput.cMickeysX) ||
+				(lastmouseY != g_MouseInput.cMickeysY))
 			{
 				mouseX = g_MouseInput.cMickeysX;
 				mouseY = g_MouseInput.cMickeysY;
@@ -402,11 +405,23 @@ static void mouse_update(void)
 				}
 			}
 
+			wheel = g_MouseInput.cWheel;
+
+			if(wheel && dwPacketNum != lastdwPacketNum)
+			{
+				for(j = 0; j < ((wheel > 0)?wheel:-wheel); j++)
+				{
+					int button = (wheel > 0)?SDL_BUTTON_WHEELUP:SDL_BUTTON_WHEELDOWN;
+
+					SDL_PrivateMouseButton(SDL_PRESSED, button, 0, 0);
+					SDL_PrivateMouseButton(SDL_RELEASED, button, 0, 0);
+				}
+			}
+
 			prev_buttons = buttons;
 			lastmouseX = g_MouseInput.cMickeysX;
 			lastmouseY = g_MouseInput.cMickeysY;
-
-			
+			lastdwPacketNum = dwPacketNum;	
         }
     }
 #endif
