@@ -12,8 +12,8 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Xbox"
-			OutputDirectory="Debug"
-			IntermediateDirectory="Debug"
+			OutputDirectory="Debug/xbox"
+			IntermediateDirectory="Debug/xbox"
 			ConfigurationType="4"
 			CharacterSet="2">
 			<Tool
@@ -21,7 +21,7 @@
 				Optimization="0"
 				OptimizeForProcessor="2"
 				AdditionalIncludeDirectories="..\include"
-				PreprocessorDefinitions="_DEBUG;_XBOX;_LIB;WIN32;_WIN32;USE_MEMORY_H"
+				PreprocessorDefinitions="_DEBUG;_XBOX;_LIB;WIN32;USE_MEMORY_H"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -45,8 +45,8 @@
 		</Configuration>
 		<Configuration
 			Name="Profile|Xbox"
-			OutputDirectory="Profile"
-			IntermediateDirectory="Profile"
+			OutputDirectory="Profile/xbox"
+			IntermediateDirectory="Profile/xbox"
 			ConfigurationType="4"
 			CharacterSet="2">
 			<Tool
@@ -78,8 +78,8 @@
 		</Configuration>
 		<Configuration
 			Name="Profile_FastCap|Xbox"
-			OutputDirectory="Profile_FastCap"
-			IntermediateDirectory="Profile_FastCap"
+			OutputDirectory="Profile_FastCap/xbox"
+			IntermediateDirectory="Profile_FastCap/xbox"
 			ConfigurationType="4"
 			CharacterSet="2">
 			<Tool
@@ -112,8 +112,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Xbox"
-			OutputDirectory="Release"
-			IntermediateDirectory="Release"
+			OutputDirectory="Release/xbox"
+			IntermediateDirectory="Release/xbox"
 			ConfigurationType="4"
 			CharacterSet="2">
 			<Tool
@@ -123,7 +123,7 @@
 				OmitFramePointers="TRUE"
 				OptimizeForProcessor="2"
 				AdditionalIncludeDirectories="..\include"
-				PreprocessorDefinitions="NDEBUG;_XBOX;_LIB;WIN32;_WIN32;;USE_MEMORY_H"
+				PreprocessorDefinitions="NDEBUG;_XBOX;_LIB;WIN32;_WIN32;USE_MEMORY_H"
 				StringPooling="TRUE"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="TRUE"
@@ -147,8 +147,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release_LTCG|Xbox"
-			OutputDirectory="Release_LTCG"
-			IntermediateDirectory="Release_LTCG"
+			OutputDirectory="Release_LTCG/xbox"
+			IntermediateDirectory="Release_LTCG/xbox"
 			ConfigurationType="4"
 			CharacterSet="2"
 			WholeProgramOptimization="TRUE">
@@ -189,6 +189,9 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
 			<File
 				RelativePath=".\vorbisfile.c">
+			</File>
+			<File
+				RelativePath="..\include\vorbis\vorbisfile.h">
 			</File>
 		</Filter>
 		<Filter

@@ -12,8 +12,8 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Xbox"
-			OutputDirectory="Debug"
-			IntermediateDirectory="Debug"
+			OutputDirectory="Debug/xbox"
+			IntermediateDirectory="Debug/xbox"
 			ConfigurationType="4"
 			CharacterSet="2">
 			<Tool
@@ -21,7 +21,7 @@
 				Optimization="0"
 				OptimizeForProcessor="2"
 				AdditionalIncludeDirectories="..\include"
-				PreprocessorDefinitions="_DEBUG;_XBOX;_LIB;WIN32;_WIN32"
+				PreprocessorDefinitions="_DEBUG;_XBOX;_LIB;WIN32"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -78,8 +78,8 @@
 		</Configuration>
 		<Configuration
 			Name="Profile_FastCap|Xbox"
-			OutputDirectory="Profile_FastCap"
-			IntermediateDirectory="Profile_FastCap"
+			OutputDirectory="Profile_FastCap/xbox"
+			IntermediateDirectory="Profile_FastCap/xbox"
 			ConfigurationType="4"
 			CharacterSet="2">
 			<Tool
@@ -112,8 +112,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Xbox"
-			OutputDirectory="Release"
-			IntermediateDirectory="Release"
+			OutputDirectory="Release/xbox"
+			IntermediateDirectory="Release/xbox"
 			ConfigurationType="4"
 			CharacterSet="2">
 			<Tool
@@ -147,8 +147,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release_LTCG|Xbox"
-			OutputDirectory="Release_LTCG"
-			IntermediateDirectory="Release_LTCG"
+			OutputDirectory="Release_LTCG/xbox"
+			IntermediateDirectory="Release_LTCG/xbox"
 			ConfigurationType="4"
 			CharacterSet="2"
 			WholeProgramOptimization="TRUE">
