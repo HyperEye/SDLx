@@ -429,6 +429,17 @@ static int CreateSecondary(LPDIRECTSOUND sndObj, int focus,
 	DSBUFFERDESC format;
 	LPVOID pvAudioPtr1, pvAudioPtr2;
 	DWORD  dwAudioBytes1, dwAudioBytes2;
+	DSMIXBINVOLUMEPAIR dsmbvp[8] = {
+    {DSMIXBIN_FRONT_LEFT, DSBVOLUME_MAX},
+    {DSMIXBIN_FRONT_RIGHT, DSBVOLUME_MAX},
+    {DSMIXBIN_FRONT_CENTER, DSBVOLUME_MAX},
+    {DSMIXBIN_FRONT_CENTER, DSBVOLUME_MAX},
+    {DSMIXBIN_BACK_LEFT, DSBVOLUME_MAX},
+    {DSMIXBIN_BACK_RIGHT, DSBVOLUME_MAX},
+    {DSMIXBIN_LOW_FREQUENCY, DSBVOLUME_MAX},
+    {DSMIXBIN_LOW_FREQUENCY, DSBVOLUME_MAX}};
+    
+	DSMIXBINS dsmb;
 
 	/* Try to create the secondary buffer */
 	memset(&format, 0, sizeof(format));
@@ -454,6 +465,13 @@ static int CreateSecondary(LPDIRECTSOUND sndObj, int focus,
 	}
 	IDirectSoundBuffer_SetVolume(*sndbuf,DSBVOLUME_MAX);
 	IDirectSoundBuffer_SetFormat(*sndbuf, wavefmt);
+
+	
+	dsmb.dwMixBinCount = 8;
+	dsmb.lpMixBinVolumePairs = dsmbvp;
+
+	IDirectSoundBuffer_SetHeadroom(*sndbuf, DSBHEADROOM_MIN);
+	IDirectSoundBuffer_SetMixBins(*sndbuf, &dsmb);
 
 	/* Silence the initial audio buffer */
 	result = IDirectSoundBuffer_Lock(*sndbuf, 0, format.dwBufferBytes,
