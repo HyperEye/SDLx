@@ -12,8 +12,8 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Xbox"
-			OutputDirectory="Debug/xbox"
-			IntermediateDirectory="Debug/xbox"
+			OutputDirectory="Debug"
+			IntermediateDirectory="Debug"
 			ConfigurationType="4"
 			CharacterSet="2">
 			<Tool
