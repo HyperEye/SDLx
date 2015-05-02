@@ -1,59 +1,35 @@
 /*
     SDL - Simple DirectMedia Layer
-    Copyright (C) 1997, 1998, 1999, 2000, 2001, 2002  Sam Lantinga
+    Copyright (C) 1997-2012 Sam Lantinga
 
     This library is free software; you can redistribute it and/or
-    modify it under the terms of the GNU Library General Public
+    modify it under the terms of the GNU Lesser General Public
     License as published by the Free Software Foundation; either
-    version 2 of the License, or (at your option) any later version.
+    version 2.1 of the License, or (at your option) any later version.
 
     This library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-    Library General Public License for more details.
+    Lesser General Public License for more details.
 
-    You should have received a copy of the GNU Library General Public
-    License along with this library; if not, write to the Free
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
     Sam Lantinga
     slouken@libsdl.org
 */
-
-#ifdef SAVE_RCSID
-static char rcsid =
- "@(#) $Id: SDL_mixer.c,v 1.1 2003/07/18 15:19:33 lantus Exp $";
-#endif
+#include "SDL_config.h"
 
 /* This provides the default mixing callback for the SDL audio routines */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include "SDL_audio.h"
-#include "SDL_mutex.h"
+#include "SDL_cpuinfo.h"
 #include "SDL_timer.h"
+#include "SDL_audio.h"
 #include "SDL_sysaudio.h"
 #include "SDL_mixer_MMX.h"
 #include "SDL_mixer_MMX_VC.h"
-
-/* Function to check the CPU flags */
-#define MMX_CPU		0x800000
-#ifdef USE_ASMBLIT
-#define CPU_Flags()	Hermes_X86_CPU()
-#else
-#define CPU_Flags()	0L
-#endif
-
-#ifdef USE_ASMBLIT
-#define X86_ASSEMBLER
-#define HermesConverterInterface	void
-#define HermesClearInterface		void
-#define STACKCALL
-
-#include "HeadX86.h"
-#endif
+#include "SDL_mixer_m68k.h"
 
 /* This table is used to add two sound values together and pin
  * the value to avoid overflow.  (used with permission from ARDI)
@@ -135,6 +111,9 @@ void SDL_MixAudio (Uint8 *dst, const Uint8 *src, Uint32 len, int volume)
 	switch (format) {
 
 		case AUDIO_U8: {
+#if defined(__GNUC__) && (defined(__m68k__) && !defined(__mcoldfire__)) && defined(SDL_ASSEMBLY_ROUTINES)
+			SDL_MixAudio_m68k_U8((char*)dst,(char*)src,(unsigned long)len,(long)volume,(char *)mix8);
+#else
 			Uint8 src_sample;
 
 			while ( len-- ) {
@@ -144,24 +123,30 @@ void SDL_MixAudio (Uint8 *dst, const Uint8 *src, Uint32 len, int volume)
 				++dst;
 				++src;
 			}
+#endif
 		}
 		break;
 
 		case AUDIO_S8: {
-#if defined(i386) && defined(__GNUC__) && defined(USE_ASMBLIT)
-			if (CPU_Flags() & MMX_CPU)
+#if defined(SDL_BUGGY_MMX_MIXERS) /* buggy, so we're disabling them. --ryan. */
+#if defined(__GNUC__) && defined(__i386__) && defined(SDL_ASSEMBLY_ROUTINES)
+			if (SDL_HasMMX())
 			{
 				SDL_MixAudio_MMX_S8((char*)dst,(char*)src,(unsigned int)len,(int)volume);
 			}
 			else
-#endif
-#if defined(USE_ASM_MIXER_VC)
-			if (SDL_IsMMX_VC())
+#elif ((defined(_MSC_VER) && defined(_M_IX86)) || defined(__WATCOMC__)) && defined(SDL_ASSEMBLY_ROUTINES)
+			if (SDL_HasMMX())
 			{
 				SDL_MixAudio_MMX_S8_VC((char*)dst,(char*)src,(unsigned int)len,(int)volume);
 			}
 			else
 #endif
+#endif
+
+#if defined(__GNUC__) && (defined(__m68k__) && !defined(__mcoldfire__)) && defined(SDL_ASSEMBLY_ROUTINES)
+			SDL_MixAudio_m68k_S8((char*)dst,(char*)src,(unsigned long)len,(long)volume);
+#else
 			{
 			Sint8 *dst8, *src8;
 			Sint8 src_sample;
@@ -187,23 +172,30 @@ void SDL_MixAudio (Uint8 *dst, const Uint8 *src, Uint32 len, int volume)
 				++src8;
 			}
 			}
+#endif
 		}
 		break;
 
 		case AUDIO_S16LSB: {
-#if defined(i386) && defined(__GNUC__) && defined(USE_ASMBLIT)
-			if (CPU_Flags() & MMX_CPU)
+#if defined(SDL_BUGGY_MMX_MIXERS) /* buggy, so we're disabling them. --ryan. */
+#if defined(__GNUC__) && defined(__i386__) && defined(SDL_ASSEMBLY_ROUTINES)
+			if (SDL_HasMMX())
 			{
 				SDL_MixAudio_MMX_S16((char*)dst,(char*)src,(unsigned int)len,(int)volume);
 			}
-			else
-#elif defined(USE_ASM_MIXER_VC)
-			if (SDL_IsMMX_VC())
+                        else
+#elif ((defined(_MSC_VER) && defined(_M_IX86)) || defined(__WATCOMC__)) && defined(SDL_ASSEMBLY_ROUTINES)
+			if (SDL_HasMMX())
 			{
 				SDL_MixAudio_MMX_S16_VC((char*)dst,(char*)src,(unsigned int)len,(int)volume);
 			}
 			else
 #endif
+#endif
+
+#if defined(__GNUC__) && (defined(__m68k__) && !defined(__mcoldfire__)) && defined(SDL_ASSEMBLY_ROUTINES)
+			SDL_MixAudio_m68k_S16LSB((short*)dst,(short*)src,(unsigned long)len,(long)volume);
+#else
 			{
 			Sint16 src1, src2;
 			int dst_sample;
@@ -229,10 +221,14 @@ void SDL_MixAudio (Uint8 *dst, const Uint8 *src, Uint32 len, int volume)
 				dst += 2;
 			}
 			}
+#endif
 		}
 		break;
 
 		case AUDIO_S16MSB: {
+#if defined(__GNUC__) && (defined(__m68k__) && !defined(__mcoldfire__)) && defined(SDL_ASSEMBLY_ROUTINES)
+			SDL_MixAudio_m68k_S16MSB((short*)dst,(short*)src,(unsigned long)len,(long)volume);
+#else
 			Sint16 src1, src2;
 			int dst_sample;
 			const int max_audioval = ((1<<(16-1))-1);
@@ -256,6 +252,7 @@ void SDL_MixAudio (Uint8 *dst, const Uint8 *src, Uint32 len, int volume)
 				dst[0] = dst_sample&0xFF;
 				dst += 2;
 			}
+#endif
 		}
 		break;
 
@@ -264,5 +261,4 @@ void SDL_MixAudio (Uint8 *dst, const Uint8 *src, Uint32 len, int volume)
 			return;
 	}
 }
-
 
