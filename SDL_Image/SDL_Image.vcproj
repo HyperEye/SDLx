@@ -214,13 +214,31 @@
 				RelativePath=".\IMG_tga.c">
 			</File>
 			<File
+				RelativePath=".\IMG_webp.c">
+			</File>
+			<File
 				RelativePath=".\IMG_xcf.c">
 			</File>
 			<File
 				RelativePath=".\IMG_xpm.c">
 			</File>
 			<File
+				RelativePath=".\IMG_xv.c">
+			</File>
+			<File
 				RelativePath=".\IMG_xxx.c">
+			</File>
+			<File
+				RelativePath=".\png.h">
+			</File>
+			<File
+				RelativePath=".\pngconf.h">
+			</File>
+			<File
+				RelativePath=".\SDL_image.h">
+			</File>
+			<File
+				RelativePath=".\showimage.c">
 			</File>
 			<Filter
 				Name="libJPEG"
