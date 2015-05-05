@@ -91,7 +91,9 @@ static struct {
 	void (*png_read_info) (png_structp png_ptr, png_infop info_ptr);
 	void (*png_read_update_info) (png_structp png_ptr, png_infop info_ptr);
 	void (*png_set_expand) (png_structp png_ptr);
+#ifndef _XBOX
 	void (*png_set_gray_to_rgb) (png_structp png_ptr);
+#endif
 	void (*png_set_packing) (png_structp png_ptr);
 	void (*png_set_read_fn) (png_structp png_ptr, png_voidp io_ptr, png_rw_ptr read_data_fn);
 	void (*png_set_strip_16) (png_structp png_ptr);
@@ -276,7 +278,9 @@ int IMG_InitPNG()
 		lib.png_read_info = png_read_info;
 		lib.png_read_update_info = png_read_update_info;
 		lib.png_set_expand = png_set_expand;
+#ifndef _XBOX
 		lib.png_set_gray_to_rgb = png_set_gray_to_rgb;
+#endif
 		lib.png_set_packing = png_set_packing;
 		lib.png_set_read_fn = png_set_read_fn;
 		lib.png_set_strip_16 = png_set_strip_16;
@@ -442,8 +446,10 @@ SDL_Surface *IMG_LoadPNG_RW(SDL_RWops *src)
 		    ckey = 0; /* actual value will be set later */
 	}
 
+#ifndef _XBOX
 	if ( color_type == PNG_COLOR_TYPE_GRAY_ALPHA )
 		lib.png_set_gray_to_rgb(png_ptr);
+#endif
 
 	lib.png_read_update_info(png_ptr, info_ptr);
 
