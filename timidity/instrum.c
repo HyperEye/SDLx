@@ -669,7 +669,7 @@ static InstrumentLayer *load_instrument(const char *name, int font_type, int per
         {
 	  goto fail;
 	}
-      sp->data = safe_malloc(sp->data_length + 1);
+      sp->data = safe_malloc(sp->data_length + 2);
       lp->size += sp->data_length + 1;
 
       if (1 != fread(sp->data, sp->data_length, 1, fp))
@@ -680,7 +680,7 @@ static InstrumentLayer *load_instrument(const char *name, int font_type, int per
 	  int32 i=sp->data_length;
 	  uint8 *cp=(uint8 *)(sp->data);
 	  uint16 *tmp,*newdta;
-	  tmp=newdta=safe_malloc(sp->data_length*2 + 2);
+	  tmp=newdta=safe_malloc(sp->data_length*2 + 4);
 	  while (i--)
 	    *tmp++ = (uint16)(*cp++) << 8;
 	  cp=(uint8 *)(sp->data);
@@ -785,7 +785,7 @@ static InstrumentLayer *load_instrument(const char *name, int font_type, int per
 
       sp->loop_start /= 2;
       sp->loop_end /= 2;
-      sp->data[sp->data_length] = sp->data[sp->data_length-1];
+      sp->data[sp->data_length] = sp->data[sp->data_length+1] = 0;
 
       /* Then fractional samples */
       sp->data_length <<= FRACTION_BITS;
