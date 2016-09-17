@@ -1,23 +1,11 @@
 /*
-
     TiMidity -- Experimental MIDI to WAVE converter
     Copyright (C) 1995 Tuukka Toivonen <toivonen@clinet.fi>
 
-	 This program is free software; you can redistribute it and/or modify
-	 it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 2 of the License, or
-	 (at your option) any later version.
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the Perl Artistic License, available in COPYING.
+ */
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	 GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
-    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -29,7 +17,7 @@
 #include "playmidi.h"
 #include "readmidi.h"
 #include "output.h"
-#include "controls.h"
+#include "ctrlmode.h"
 #include "timidity.h"
 
 #include "tables.h"
@@ -39,15 +27,16 @@ int free_instruments_afterwards=0;
 static char def_instr_name[256]="";
 
 int AUDIO_BUFFER_SIZE;
-sample_t *resample_buffer;
-int32 *common_buffer;
+resample_t *resample_buffer=NULL;
+int32 *common_buffer=NULL;
+int num_ochannels;
 
 #define MAXWORDS 10
 
-static int read_config_file(char *name)
+static int read_config_file(const char *name)
 {
   FILE *fp;
-  char tmp[1024], *w[MAXWORDS], *cp;
+  char tmp[PATH_MAX], *w[MAXWORDS], *cp;
   ToneBank *bank=0;
   int i, j, k, line=0, words;
   static int rcf_count=0;
@@ -63,33 +52,42 @@ static int read_config_file(char *name)
    return -1;
 
   while (fgets(tmp, sizeof(tmp), fp))
-   {
-		line++;
-		w[words=0]=strtok(tmp, " \t\r\n\240");
-		if (!w[0] || (*w[0]=='#')) continue;
-		while (w[words] && (words < MAXWORDS))
-			w[++words]=strtok(0," \t\r\n\240");
-		if (!strcmp(w[0], "dir")) {
-			if (words < 2)	{
-				ctl->cmsg(CMSG_ERROR, VERB_NORMAL,"%s: line %d: No directory given\n", name, line);
-				return -2;
-			}
-			for (i=1; i<words; i++)
-			add_to_pathlist(w[i]);
-		}
-		else if (!strcmp(w[0], "source")) {
-			if (words < 2)
-			{
-				ctl->cmsg(CMSG_ERROR, VERB_NORMAL,"%s: line %d: No file name given\n", name, line);
-				return -2;
-			}
-			for (i=1; i<words; i++)
-			{
-				rcf_count++;
-				read_config_file(w[i]);
-				rcf_count--;
-			}
-		}
+  {
+    line++;
+    w[words=0]=strtok(tmp, " \t\r\n\240");
+    if (!w[0] || (*w[0]=='#')) continue;
+    while (w[words] && (words < MAXWORDS))
+      {
+        w[++words]=strtok(0," \t\r\n\240");
+        if (w[words] && w[words][0]=='#') break;
+      }
+    if (!strcmp(w[0], "map")) continue;
+    if (!strcmp(w[0], "dir"))
+    {
+      if (words < 2)
+       {
+        ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+          "%s: line %d: No directory given\n", name, line);
+        return -2;
+       }
+      for (i=1; i<words; i++)
+        add_to_pathlist(w[i]);
+    }
+  else if (!strcmp(w[0], "source"))
+  {
+    if (words < 2)
+      {
+        ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+          "%s: line %d: No file name given\n", name, line);
+        return -2;
+     }
+    for (i=1; i<words; i++)
+      {
+        rcf_count++;
+      read_config_file(w[i]);
+        rcf_count--;
+      }
+  }
       else if (!strcmp(w[0], "default"))
   {
     if (words != 2)
@@ -288,6 +286,10 @@ int Timidity_Init(int rate, int format, int channels, int samples)
     return(-1);
   }
 
+  if (channels < 1 || channels == 3 || channels == 5 || channels > 6) return(-1);
+
+  num_ochannels = channels;
+
   /* Set play mode parameters */
   play_mode->rate = rate;
   play_mode->encoding = 0;
@@ -326,8 +328,8 @@ int Timidity_Init(int rate, int format, int channels, int samples)
   AUDIO_BUFFER_SIZE = samples;
 
   /* Allocate memory for mixing (WARNING:  Memory leak!) */
-  resample_buffer = safe_malloc(AUDIO_BUFFER_SIZE*sizeof(sample_t));
-  common_buffer = safe_malloc(AUDIO_BUFFER_SIZE*2*sizeof(int32));
+  resample_buffer = safe_malloc(AUDIO_BUFFER_SIZE*sizeof(resample_t)+100);
+  common_buffer = safe_malloc(AUDIO_BUFFER_SIZE*num_ochannels*sizeof(int32));
 
   init_tables();
 
@@ -348,8 +350,9 @@ int Timidity_Init(int rate, int format, int channels, int samples)
   return(0);
 }
 
-char timidity_error[1024] = "";
-char *Timidity_Error(void)
+char timidity_error[TIMIDITY_ERROR_SIZE] = "";
+const char *Timidity_Error(void)
 {
   return(timidity_error);
 }
+

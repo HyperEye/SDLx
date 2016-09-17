@@ -28,6 +28,7 @@ static char rcsid =
 /* Functions for dynamically reading and writing endian-specific values */
 
 #include "SDL_endian.h"
+#include "SDL_rwops.h"
 
 Uint16 SDL_ReadLE16 (SDL_RWops *src)
 {

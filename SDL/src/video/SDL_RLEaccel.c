@@ -1,29 +1,25 @@
 /*
     SDL - Simple DirectMedia Layer
-    Copyright (C) 1997, 1998, 1999, 2000, 2001, 2002  Sam Lantinga
+    Copyright (C) 1997-2012 Sam Lantinga
 
     This library is free software; you can redistribute it and/or
-    modify it under the terms of the GNU Library General Public
+    modify it under the terms of the GNU Lesser General Public
     License as published by the Free Software Foundation; either
-    version 2 of the License, or (at your option) any later version.
+    version 2.1 of the License, or (at your option) any later version.
 
     This library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-    Library General Public License for more details.
+    Lesser General Public License for more details.
 
-    You should have received a copy of the GNU Library General Public
-    License along with this library; if not, write to the Free
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
     Sam Lantinga
     slouken@libsdl.org
 */
-
-#ifdef SAVE_RCSID
-static char rcsid =
- "@(#) $Id: SDL_RLEaccel.c,v 1.1 2003/07/18 15:19:33 lantus Exp $";
-#endif
+#include "SDL_config.h"
 
 /*
  * RLE encoding for software colorkey and alpha-channel acceleration
@@ -90,17 +86,20 @@ static char rcsid =
  *   beginning of an opaque line.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include "SDL_types.h"
 #include "SDL_video.h"
-#include "SDL_error.h"
 #include "SDL_sysvideo.h"
 #include "SDL_blit.h"
-#include "SDL_memops.h"
 #include "SDL_RLEaccel_c.h"
+
+/* Force MMX to 0; this blows up on almost every major compiler now. --ryan. */
+#if 0 && defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__)) && SDL_ASSEMBLY_ROUTINES
+#define MMX_ASMBLIT
+#endif
+
+#ifdef MMX_ASMBLIT
+#include "mmx.h"
+#include "SDL_cpuinfo.h"
+#endif
 
 #ifndef MAX
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
@@ -112,9 +111,9 @@ static char rcsid =
 #define PIXEL_COPY(to, from, len, bpp)			\
 do {							\
     if(bpp == 4) {					\
-	SDL_memcpy4(to, from, (unsigned)(len));		\
+	SDL_memcpy4(to, from, (size_t)(len));		\
     } else {						\
-	SDL_memcpy(to, from, (unsigned)(len) * (bpp));	\
+	SDL_memcpy(to, from, (size_t)(len) * (bpp));	\
     }							\
 } while(0)
 
@@ -124,6 +123,262 @@ do {							\
 
 #define OPAQUE_BLIT(to, from, length, bpp, alpha)	\
     PIXEL_COPY(to, from, length, bpp)
+
+#ifdef MMX_ASMBLIT
+
+#define ALPHA_BLIT32_888MMX(to, from, length, bpp, alpha)	\
+    do {							\
+	Uint32 *srcp = (Uint32 *)(from);			\
+	Uint32 *dstp = (Uint32 *)(to);				\
+        int i = 0x00FF00FF;					\
+        movd_m2r(*(&i), mm3);					\
+        punpckldq_r2r(mm3, mm3);				\
+        i = 0xFF000000;						\
+        movd_m2r(*(&i), mm7);					\
+        punpckldq_r2r(mm7, mm7);				\
+        i = alpha | alpha << 16;				\
+        movd_m2r(*(&i), mm4);					\
+        punpckldq_r2r(mm4, mm4);				\
+	pcmpeqd_r2r(mm5,mm5); /* set mm5 to "1" */		\
+	pxor_r2r(mm7, mm5); /* make clear alpha mask */		\
+        i = length;						\
+	if(i & 1) {						\
+          movd_m2r((*srcp), mm1); /* src -> mm1 */		\
+          punpcklbw_r2r(mm1, mm1);				\
+          pand_r2r(mm3, mm1);					\
+	  movd_m2r((*dstp), mm2); /* dst -> mm2 */		\
+          punpcklbw_r2r(mm2, mm2);				\
+          pand_r2r(mm3, mm2);					\
+	  psubw_r2r(mm2, mm1);					\
+	  pmullw_r2r(mm4, mm1);					\
+	  psrlw_i2r(8, mm1);					\
+	  paddw_r2r(mm1, mm2);					\
+	  pand_r2r(mm3, mm2);					\
+	  packuswb_r2r(mm2, mm2);				\
+	  pand_r2r(mm5, mm2); /* 00000RGB -> mm2 */		\
+	  movd_r2m(mm2, *dstp);					\
+	  ++srcp;						\
+	  ++dstp;						\
+	  i--;							\
+	}							\
+	for(; i > 0; --i) {					\
+          movq_m2r((*srcp), mm0);				\
+	  movq_r2r(mm0, mm1);					\
+          punpcklbw_r2r(mm0, mm0);				\
+	  movq_m2r((*dstp), mm2);				\
+	  punpckhbw_r2r(mm1, mm1);				\
+	  movq_r2r(mm2, mm6);					\
+          pand_r2r(mm3, mm0);					\
+          punpcklbw_r2r(mm2, mm2);				\
+	  pand_r2r(mm3, mm1);					\
+	  punpckhbw_r2r(mm6, mm6);				\
+          pand_r2r(mm3, mm2);					\
+	  psubw_r2r(mm2, mm0);					\
+	  pmullw_r2r(mm4, mm0);					\
+	  pand_r2r(mm3, mm6);					\
+	  psubw_r2r(mm6, mm1);					\
+	  pmullw_r2r(mm4, mm1);					\
+	  psrlw_i2r(8, mm0);					\
+	  paddw_r2r(mm0, mm2);					\
+	  psrlw_i2r(8, mm1);					\
+	  paddw_r2r(mm1, mm6);					\
+	  pand_r2r(mm3, mm2);					\
+	  pand_r2r(mm3, mm6);					\
+	  packuswb_r2r(mm2, mm2);				\
+	  packuswb_r2r(mm6, mm6);				\
+	  psrlq_i2r(32, mm2);					\
+	  psllq_i2r(32, mm6);					\
+	  por_r2r(mm6, mm2);					\
+	  pand_r2r(mm5, mm2); /* 00000RGB -> mm2 */		\
+         movq_r2m(mm2, *dstp);					\
+	  srcp += 2;						\
+	  dstp += 2;						\
+	  i--;							\
+	}							\
+	emms();							\
+    } while(0)
+
+#define ALPHA_BLIT16_565MMX(to, from, length, bpp, alpha)	\
+    do {						\
+        int i, n = 0;					\
+	Uint16 *srcp = (Uint16 *)(from);		\
+	Uint16 *dstp = (Uint16 *)(to);			\
+        Uint32 ALPHA = 0xF800;				\
+	movd_m2r(*(&ALPHA), mm1);			\
+        punpcklwd_r2r(mm1, mm1);			\
+        punpcklwd_r2r(mm1, mm1);			\
+	ALPHA = 0x07E0;					\
+	movd_m2r(*(&ALPHA), mm4);			\
+        punpcklwd_r2r(mm4, mm4);			\
+        punpcklwd_r2r(mm4, mm4);			\
+	ALPHA = 0x001F;					\
+	movd_m2r(*(&ALPHA), mm7);			\
+        punpcklwd_r2r(mm7, mm7);			\
+        punpcklwd_r2r(mm7, mm7);			\
+	alpha &= ~(1+2+4);				\
+        i = (Uint32)alpha | (Uint32)alpha << 16;	\
+        movd_m2r(*(&i), mm0);				\
+        punpckldq_r2r(mm0, mm0);			\
+        ALPHA = alpha >> 3;				\
+        i = ((int)(length) & 3);			\
+	for(; i > 0; --i) {				\
+	    Uint32 s = *srcp++;				\
+	    Uint32 d = *dstp;				\
+	    s = (s | s << 16) & 0x07e0f81f;		\
+	    d = (d | d << 16) & 0x07e0f81f;		\
+	    d += (s - d) * ALPHA >> 5;			\
+	    d &= 0x07e0f81f;				\
+	    *dstp++ = d | d >> 16;			\
+	    n++;					\
+	}						\
+	i = (int)(length) - n;				\
+	for(; i > 0; --i) {				\
+	  movq_m2r((*dstp), mm3);			\
+	  movq_m2r((*srcp), mm2);			\
+	  movq_r2r(mm2, mm5);				\
+	  pand_r2r(mm1 , mm5);				\
+	  psrlq_i2r(11, mm5);				\
+	  movq_r2r(mm3, mm6);				\
+	  pand_r2r(mm1 , mm6);				\
+	  psrlq_i2r(11, mm6);				\
+	  psubw_r2r(mm6, mm5);				\
+	  pmullw_r2r(mm0, mm5);				\
+	  psrlw_i2r(8, mm5);				\
+	  paddw_r2r(mm5, mm6);				\
+	  psllq_i2r(11, mm6);				\
+	  pand_r2r(mm1, mm6);				\
+	  movq_r2r(mm4, mm5);				\
+	  por_r2r(mm7, mm5);				\
+	  pand_r2r(mm5, mm3);				\
+	  por_r2r(mm6, mm3);				\
+	  movq_r2r(mm2, mm5);				\
+	  pand_r2r(mm4 , mm5);				\
+	  psrlq_i2r(5, mm5);				\
+	  movq_r2r(mm3, mm6);				\
+	  pand_r2r(mm4 , mm6);				\
+	  psrlq_i2r(5, mm6);				\
+	  psubw_r2r(mm6, mm5);				\
+	  pmullw_r2r(mm0, mm5);				\
+	  psrlw_i2r(8, mm5);				\
+	  paddw_r2r(mm5, mm6);				\
+	  psllq_i2r(5, mm6);				\
+	  pand_r2r(mm4, mm6);				\
+	  movq_r2r(mm1, mm5);				\
+	  por_r2r(mm7, mm5);				\
+	  pand_r2r(mm5, mm3);				\
+	  por_r2r(mm6, mm3);				\
+	  movq_r2r(mm2, mm5);				\
+	  pand_r2r(mm7 , mm5);				\
+          movq_r2r(mm3, mm6);				\
+	  pand_r2r(mm7 , mm6);				\
+	  psubw_r2r(mm6, mm5);				\
+	  pmullw_r2r(mm0, mm5);				\
+	  psrlw_i2r(8, mm5);				\
+	  paddw_r2r(mm5, mm6);				\
+	  pand_r2r(mm7, mm6);				\
+	  movq_r2r(mm1, mm5);				\
+	  por_r2r(mm4, mm5);				\
+	  pand_r2r(mm5, mm3);				\
+	  por_r2r(mm6, mm3);				\
+	  movq_r2m(mm3, *dstp);				\
+	  srcp += 4;					\
+	  dstp += 4;					\
+	  i -= 3;					\
+	}						\
+	emms();						\
+    } while(0)
+
+#define ALPHA_BLIT16_555MMX(to, from, length, bpp, alpha)	\
+    do {						\
+        int i, n = 0;					\
+	Uint16 *srcp = (Uint16 *)(from);		\
+	Uint16 *dstp = (Uint16 *)(to);			\
+        Uint32 ALPHA = 0x7C00;				\
+	movd_m2r(*(&ALPHA), mm1);			\
+        punpcklwd_r2r(mm1, mm1);			\
+        punpcklwd_r2r(mm1, mm1);			\
+	ALPHA = 0x03E0;					\
+        movd_m2r(*(&ALPHA), mm4);			\
+        punpcklwd_r2r(mm4, mm4);			\
+        punpcklwd_r2r(mm4, mm4);			\
+	ALPHA = 0x001F;					\
+	movd_m2r(*(&ALPHA), mm7);			\
+        punpcklwd_r2r(mm7, mm7);			\
+        punpcklwd_r2r(mm7, mm7);			\
+	alpha &= ~(1+2+4);				\
+        i = (Uint32)alpha | (Uint32)alpha << 16;	\
+        movd_m2r(*(&i), mm0);				\
+        punpckldq_r2r(mm0, mm0);			\
+        i = ((int)(length) & 3);				\
+        ALPHA = alpha >> 3;				\
+	for(; i > 0; --i) {				\
+	    Uint32 s = *srcp++;				\
+	    Uint32 d = *dstp;				\
+	    s = (s | s << 16) & 0x03e07c1f;		\
+	    d = (d | d << 16) & 0x03e07c1f;		\
+	    d += (s - d) * ALPHA >> 5;			\
+	    d &= 0x03e07c1f;				\
+	    *dstp++ = d | d >> 16;			\
+	    n++;					\
+	}						\
+	i = (int)(length) - n;				\
+	for(; i > 0; --i) {				\
+	  movq_m2r((*dstp), mm3);			\
+	  movq_m2r((*srcp), mm2);			\
+	  movq_r2r(mm2, mm5);				\
+	  pand_r2r(mm1 , mm5);				\
+	  psrlq_i2r(10, mm5);				\
+	  movq_r2r(mm3, mm6);				\
+	  pand_r2r(mm1 , mm6);				\
+	  psrlq_i2r(10, mm6);				\
+	  psubw_r2r(mm6, mm5);				\
+	  pmullw_r2r(mm0, mm5);				\
+	  psrlw_i2r(8, mm5);				\
+	  paddw_r2r(mm5, mm6);				\
+	  psllq_i2r(10, mm6);				\
+	  pand_r2r(mm1, mm6);				\
+	  movq_r2r(mm4, mm5);				\
+	  por_r2r(mm7, mm5);				\
+	  pand_r2r(mm5, mm3);				\
+	  por_r2r(mm6, mm3);				\
+	  movq_r2r(mm2, mm5);				\
+	  pand_r2r(mm4 , mm5);				\
+	  psrlq_i2r(5, mm5);				\
+	  movq_r2r(mm3, mm6);				\
+	  pand_r2r(mm4 , mm6);				\
+	  psrlq_i2r(5, mm6);				\
+	  psubw_r2r(mm6, mm5);				\
+	  pmullw_r2r(mm0, mm5);				\
+	  psrlw_i2r(8, mm5);				\
+	  paddw_r2r(mm5, mm6);				\
+	  psllq_i2r(5, mm6);				\
+	  pand_r2r(mm4, mm6);				\
+	  movq_r2r(mm1, mm5);				\
+	  por_r2r(mm7, mm5);				\
+	  pand_r2r(mm5, mm3);				\
+	  por_r2r(mm6, mm3);				\
+	  movq_r2r(mm2, mm5);				\
+	  pand_r2r(mm7 , mm5);				\
+          movq_r2r(mm3, mm6);				\
+	  pand_r2r(mm7 , mm6);				\
+	  psubw_r2r(mm6, mm5);				\
+	  pmullw_r2r(mm0, mm5);				\
+	  psrlw_i2r(8, mm5);				\
+	  paddw_r2r(mm5, mm6);				\
+	  pand_r2r(mm7, mm6);				\
+	  movq_r2r(mm1, mm5);				\
+	  por_r2r(mm4, mm5);				\
+	  pand_r2r(mm5, mm3);				\
+	  por_r2r(mm6, mm3);				\
+	  movq_r2m(mm3, *dstp);				\
+	  srcp += 4;					\
+	  dstp += 4;					\
+	  i -= 3;					\
+	}						\
+	emms();						\
+    } while(0)
+
+#endif
 
 /*
  * For 32bpp pixels on the form 0x00rrggbb:
@@ -161,14 +416,15 @@ do {							\
         int i;						\
 	Uint16 *src = (Uint16 *)(from);			\
 	Uint16 *dst = (Uint16 *)(to);			\
+	Uint32 ALPHA = alpha >> 3;			\
 	for(i = 0; i < (int)(length); i++) {		\
 	    Uint32 s = *src++;				\
 	    Uint32 d = *dst;				\
 	    s = (s | s << 16) & 0x07e0f81f;		\
 	    d = (d | d << 16) & 0x07e0f81f;		\
-	    d += (s - d) * alpha >> 5;			\
+	    d += (s - d) * ALPHA >> 5;			\
 	    d &= 0x07e0f81f;				\
-	    *dst++ = d | d >> 16;			\
+	    *dst++ = (Uint16)(d | d >> 16);			\
 	}						\
     } while(0)
 
@@ -177,14 +433,15 @@ do {							\
         int i;						\
 	Uint16 *src = (Uint16 *)(from);			\
 	Uint16 *dst = (Uint16 *)(to);			\
+	Uint32 ALPHA = alpha >> 3;			\
 	for(i = 0; i < (int)(length); i++) {		\
 	    Uint32 s = *src++;				\
 	    Uint32 d = *dst;				\
 	    s = (s | s << 16) & 0x03e07c1f;		\
 	    d = (d | d << 16) & 0x03e07c1f;		\
-	    d += (s - d) * alpha >> 5;			\
+	    d += (s - d) * ALPHA >> 5;			\
 	    d &= 0x03e07c1f;				\
-	    *dst++ = d | d >> 16;			\
+	    *dst++ = (Uint16)(d | d >> 16);			\
 	}						\
     } while(0)
 
@@ -226,17 +483,17 @@ do {							\
 	    PIXEL_FROM_RGB(d, fmt, rd, gd, bd);				\
 	    switch(bpp) {						\
 	    case 2:							\
-		*(Uint16 *)dst = d;					\
+		*(Uint16 *)dst = (Uint16)d;					\
 		break;							\
 	    case 3:							\
 		if(SDL_BYTEORDER == SDL_BIG_ENDIAN) {			\
-		    dst[0] = d >> 16;					\
-		    dst[1] = d >> 8;					\
-		    dst[2] = d;						\
+		    dst[0] = (Uint8)(d >> 16);					\
+		    dst[1] = (Uint8)(d >> 8);					\
+		    dst[2] = (Uint8)(d);						\
 		} else {						\
-		    dst[0] = d;						\
-		    dst[1] = d >> 8;					\
-		    dst[2] = d >> 16;					\
+		    dst[0] = (Uint8)d;						\
+		    dst[1] = (Uint8)(d >> 8);					\
+		    dst[2] = (Uint8)(d >> 16);					\
 		}							\
 		break;							\
 	    case 4:							\
@@ -248,7 +505,48 @@ do {							\
 	}								\
     } while(0)
 
+#ifdef MMX_ASMBLIT
 
+#define ALPHA_BLIT32_888_50MMX(to, from, length, bpp, alpha)		\
+    do {								\
+	Uint32 *srcp = (Uint32 *)(from);				\
+	Uint32 *dstp = (Uint32 *)(to);					\
+        int i = 0x00fefefe;						\
+        movd_m2r(*(&i), mm4);						\
+        punpckldq_r2r(mm4, mm4);					\
+        i = 0x00010101;							\
+        movd_m2r(*(&i), mm3);						\
+        punpckldq_r2r(mm3, mm3);					\
+        i = (int)(length);						\
+        if( i & 1 ) {							\
+	  Uint32 s = *srcp++;						\
+	  Uint32 d = *dstp;						\
+	  *dstp++ = (((s & 0x00fefefe) + (d & 0x00fefefe)) >> 1)	\
+		     + (s & d & 0x00010101);				\
+	  i--;								\
+	}								\
+	for(; i > 0; --i) {						\
+	    movq_m2r((*dstp), mm2); /* dst -> mm2 */			\
+	    movq_r2r(mm2, mm6);	/* dst -> mm6 */			\
+	    movq_m2r((*srcp), mm1); /* src -> mm1 */			\
+	    movq_r2r(mm1, mm5);	/* src -> mm5 */			\
+	    pand_r2r(mm4, mm6);	/* dst & 0x00fefefe -> mm6 */		\
+	    pand_r2r(mm4, mm5); /* src & 0x00fefefe -> mm5 */		\
+	    paddd_r2r(mm6, mm5); /* (dst & 0x00fefefe) + (dst & 0x00fefefe) -> mm5 */	\
+	    psrld_i2r(1, mm5);						\
+	    pand_r2r(mm1, mm2);	/* s & d -> mm2 */			\
+	    pand_r2r(mm3, mm2);	/* s & d & 0x00010101 -> mm2 */		\
+	    paddd_r2r(mm5, mm2);					\
+	    movq_r2m(mm2, (*dstp));					\
+	    dstp += 2;							\
+	    srcp += 2;							\
+	    i--;							\
+	}								\
+	emms();								\
+    } while(0)
+
+#endif
+    
 /*
  * Special case: 50% alpha (alpha=128)
  * This is treated specially because it can be optimized very well, and
@@ -278,10 +576,10 @@ do {							\
 /* helper: blend a single 16 bit pixel at 50% */
 #define BLEND16_50(dst, src, mask)			\
     do {						\
-        Uint32 s = *src++;				\
+	Uint32 s = *src++;				\
 	Uint32 d = *dst;				\
-	*dst++ = (((s & mask) + (d & mask)) >> 1)	\
-	         + (s & d & (~mask & 0xffff));		\
+	*dst++ = (Uint16)((((s & mask) + (d & mask)) >> 1) +	\
+	                  (s & d & (~mask & 0xffff)));		\
     } while(0)
 
 /* basic 16bpp blender. mask is the pixels to keep when adding. */
@@ -290,12 +588,12 @@ do {							\
 	unsigned n = (length);						\
 	Uint16 *src = (Uint16 *)(from);					\
 	Uint16 *dst = (Uint16 *)(to);					\
-	if(((unsigned long)src ^ (unsigned long)dst) & 3) {		\
+	if(((uintptr_t)src ^ (uintptr_t)dst) & 3) {			\
 	    /* source and destination not in phase, blit one by one */	\
 	    while(n--)							\
 		BLEND16_50(dst, src, mask);				\
 	} else {							\
-	    if((unsigned long)src & 3) {				\
+	    if((uintptr_t)src & 3) {					\
 		/* first odd pixel */					\
 		BLEND16_50(dst, src, mask);				\
 		n--;							\
@@ -320,6 +618,7 @@ do {							\
 #define ALPHA_BLIT16_555_50(to, from, length, bpp, alpha)	\
     ALPHA_BLIT16_50(to, from, length, bpp, alpha, 0xfbde)
 
+#ifdef MMX_ASMBLIT
 
 #define CHOOSE_BLIT(blitter, alpha, fmt)				\
     do {								\
@@ -345,7 +644,92 @@ do {							\
 			if(alpha == 128)				\
 			    blitter(2, Uint8, ALPHA_BLIT16_565_50);	\
 			else {						\
-			    alpha >>= 3; /* use 5 bit alpha */		\
+			    if(SDL_HasMMX())				\
+				blitter(2, Uint8, ALPHA_BLIT16_565MMX);	\
+			    else					\
+				blitter(2, Uint8, ALPHA_BLIT16_565);	\
+			}						\
+		    } else						\
+			goto general16;					\
+		    break;						\
+									\
+		case 0x7fff:						\
+		    if(fmt->Gmask == 0x03e0				\
+		       || fmt->Rmask == 0x03e0				\
+		       || fmt->Bmask == 0x03e0) {			\
+			if(alpha == 128)				\
+			    blitter(2, Uint8, ALPHA_BLIT16_555_50);	\
+			else {						\
+			    if(SDL_HasMMX())				\
+				blitter(2, Uint8, ALPHA_BLIT16_555MMX);	\
+			    else					\
+				blitter(2, Uint8, ALPHA_BLIT16_555);	\
+			}						\
+			break;						\
+		    }							\
+		    /* fallthrough */					\
+									\
+		default:						\
+		general16:						\
+		    blitter(2, Uint8, ALPHA_BLIT_ANY);			\
+		}							\
+		break;							\
+									\
+	    case 3:							\
+		blitter(3, Uint8, ALPHA_BLIT_ANY);			\
+		break;							\
+									\
+	    case 4:							\
+		if((fmt->Rmask | fmt->Gmask | fmt->Bmask) == 0x00ffffff	\
+		   && (fmt->Gmask == 0xff00 || fmt->Rmask == 0xff00	\
+		       || fmt->Bmask == 0xff00)) {			\
+		    if(alpha == 128)					\
+		    {							\
+			if(SDL_HasMMX())				\
+				blitter(4, Uint16, ALPHA_BLIT32_888_50MMX);\
+			else						\
+				blitter(4, Uint16, ALPHA_BLIT32_888_50);\
+		    }							\
+		    else						\
+		    {							\
+			if(SDL_HasMMX())				\
+				blitter(4, Uint16, ALPHA_BLIT32_888MMX);\
+			else						\
+				blitter(4, Uint16, ALPHA_BLIT32_888);	\
+		    }							\
+		} else							\
+		    blitter(4, Uint16, ALPHA_BLIT_ANY);			\
+		break;							\
+	    }								\
+	}								\
+    } while(0)
+
+#else
+	
+#define CHOOSE_BLIT(blitter, alpha, fmt)				\
+    do {								\
+        if(alpha == 255) {						\
+	    switch(fmt->BytesPerPixel) {				\
+	    case 1: blitter(1, Uint8, OPAQUE_BLIT); break;		\
+	    case 2: blitter(2, Uint8, OPAQUE_BLIT); break;		\
+	    case 3: blitter(3, Uint8, OPAQUE_BLIT); break;		\
+	    case 4: blitter(4, Uint16, OPAQUE_BLIT); break;		\
+	    }								\
+	} else {							\
+	    switch(fmt->BytesPerPixel) {				\
+	    case 1:							\
+		/* No 8bpp alpha blitting */				\
+		break;							\
+									\
+	    case 2:							\
+		switch(fmt->Rmask | fmt->Gmask | fmt->Bmask) {		\
+		case 0xffff:						\
+		    if(fmt->Gmask == 0x07e0				\
+		       || fmt->Rmask == 0x07e0				\
+		       || fmt->Bmask == 0x07e0) {			\
+			if(alpha == 128)				\
+			    blitter(2, Uint8, ALPHA_BLIT16_565_50);	\
+			else {						\
 			    blitter(2, Uint8, ALPHA_BLIT16_565);	\
 			}						\
 		    } else						\
@@ -359,7 +743,6 @@ do {							\
 			if(alpha == 128)				\
 			    blitter(2, Uint8, ALPHA_BLIT16_555_50);	\
 			else {						\
-			    alpha >>= 3; /* use 5 bit alpha */		\
 			    blitter(2, Uint8, ALPHA_BLIT16_555);	\
 			}						\
 			break;						\
@@ -391,6 +774,7 @@ do {							\
 	}								\
     } while(0)
 
+#endif
 
 /*
  * This takes care of the case when the surface is clipped on the left and/or
@@ -588,32 +972,32 @@ done:
  */
 #define BLIT_TRANSL_565(src, dst)		\
     do {					\
-        Uint32 s = src;				\
+	Uint32 s = src;				\
 	Uint32 d = dst;				\
 	unsigned alpha = (s & 0x3e0) >> 5;	\
 	s &= 0x07e0f81f;			\
 	d = (d | d << 16) & 0x07e0f81f;		\
 	d += (s - d) * alpha >> 5;		\
 	d &= 0x07e0f81f;			\
-	dst = d | d >> 16;			\
+	dst = (Uint16)(d | d >> 16);			\
     } while(0)
 
 #define BLIT_TRANSL_555(src, dst)		\
     do {					\
-        Uint32 s = src;				\
+	Uint32 s = src;				\
 	Uint32 d = dst;				\
 	unsigned alpha = (s & 0x3e0) >> 5;	\
 	s &= 0x03e07c1f;			\
 	d = (d | d << 16) & 0x03e07c1f;		\
 	d += (s - d) * alpha >> 5;		\
 	d &= 0x03e07c1f;			\
-	dst = d | d >> 16;			\
+	dst = (Uint16)(d | d >> 16);			\
     } while(0)
 
 /* used to save the destination format in the encoding. Designed to be
    macro-compatible with SDL_PixelFormat but without the unneeded fields */
 typedef struct {
-    	Uint8  BytesPerPixel;
+	Uint8  BytesPerPixel;
 	Uint8  Rloss;
 	Uint8  Gloss;
 	Uint8  Bloss;
@@ -672,7 +1056,7 @@ static void RLEAlphaClipBlit(int w, Uint8 *srcbuf, SDL_Surface *dst,
 	    } while(ofs < w);						  \
 	    /* skip padding if necessary */				  \
 	    if(sizeof(Ptype) == 2)					  \
-		srcbuf += (unsigned long)srcbuf & 2;			  \
+		srcbuf += (uintptr_t)srcbuf & 2;			  \
 	    /* blit translucent pixels on the same line */		  \
 	    ofs = 0;							  \
 	    do {							  \
@@ -764,7 +1148,7 @@ int SDL_RLEAlphaBlit(SDL_Surface *src, SDL_Rect *srcrect,
 		    } while(ofs < w);
 
 		    /* skip padding */
-		    srcbuf += (unsigned long)srcbuf & 2;
+		    srcbuf += (uintptr_t)srcbuf & 2;
 
 		    /* skip translucent line */
 		    ofs = 0;
@@ -828,7 +1212,7 @@ int SDL_RLEAlphaBlit(SDL_Surface *src, SDL_Rect *srcrect,
 		} while(ofs < w);					 \
 		/* skip padding if necessary */				 \
 		if(sizeof(Ptype) == 2)					 \
-		    srcbuf += (unsigned long)srcbuf & 2;		 \
+		    srcbuf += (uintptr_t)srcbuf & 2;		 	 \
 		/* blit translucent pixels on the same line */		 \
 		ofs = 0;						 \
 		do {							 \
@@ -1081,7 +1465,7 @@ static int RLEAlphaSurface(SDL_Surface *surface)
     }
 
     maxsize += sizeof(RLEDestFormat);
-    rlebuf = (Uint8 *)malloc(maxsize);
+    rlebuf = (Uint8 *)SDL_malloc(maxsize);
     if(!rlebuf) {
 	SDL_OutOfMemory();
 	return -1;
@@ -1164,7 +1548,7 @@ static int RLEAlphaSurface(SDL_Surface *surface)
 	    } while(x < w);
 
 	    /* Make sure the next output address is 32-bit aligned */
-	    dst += (unsigned long)dst & 2;
+	    dst += (uintptr_t)dst & 2;
 
 	    /* Next, encode all translucent pixels of the same scan line */
 	    x = 0;
@@ -1211,13 +1595,13 @@ static int RLEAlphaSurface(SDL_Surface *surface)
     /* Now that we have it encoded, release the original pixels */
     if((surface->flags & SDL_PREALLOC) != SDL_PREALLOC
        && (surface->flags & SDL_HWSURFACE) != SDL_HWSURFACE) {
-	free( surface->pixels );
+	SDL_free( surface->pixels );
 	surface->pixels = NULL;
     }
 
     /* realloc the buffer to release unused memory */
     {
-	Uint8 *p = realloc(rlebuf, dst - rlebuf);
+	Uint8 *p = SDL_realloc(rlebuf, dst - rlebuf);
 	if(!p)
 	    p = rlebuf;
 	surface->map->sw_data->aux_data = p;
@@ -1238,10 +1622,11 @@ static Uint32 getpix_16(Uint8 *srcbuf)
 
 static Uint32 getpix_24(Uint8 *srcbuf)
 {
-    if(SDL_BYTEORDER == SDL_LIL_ENDIAN)
-	return srcbuf[0] + (srcbuf[1] << 8) + (srcbuf[2] << 16);
-    else
-	return (srcbuf[0] << 16) + (srcbuf[1] << 8) + srcbuf[2];
+#if SDL_BYTEORDER == SDL_LIL_ENDIAN
+    return srcbuf[0] + (srcbuf[1] << 8) + (srcbuf[2] << 16);
+#else
+    return (srcbuf[0] << 16) + (srcbuf[1] << 8) + srcbuf[2];
+#endif
 }
 
 static Uint32 getpix_32(Uint8 *srcbuf)
@@ -1260,9 +1645,8 @@ static int RLEColorkeySurface(SDL_Surface *surface)
         Uint8 *rlebuf, *dst;
 	int maxn;
 	int y;
-	Uint8 *srcbuf, *curbuf, *lastline;
+	Uint8 *srcbuf, *lastline;
 	int maxsize = 0;
-	int skip, run;
 	int bpp = surface->format->BytesPerPixel;
 	getpix_func getpix;
 	Uint32 ckey, rgbmask;
@@ -1288,7 +1672,7 @@ static int RLEColorkeySurface(SDL_Surface *surface)
 	    break;
 	}
 
-	rlebuf = (Uint8 *)malloc(maxsize);
+	rlebuf = (Uint8 *)SDL_malloc(maxsize);
 	if ( rlebuf == NULL ) {
 		SDL_OutOfMemory();
 		return(-1);
@@ -1296,9 +1680,7 @@ static int RLEColorkeySurface(SDL_Surface *surface)
 
 	/* Set up the conversion */
 	srcbuf = (Uint8 *)surface->pixels;
-	curbuf = srcbuf;
 	maxn = bpp == 4 ? 65535 : 255;
-	skip = run = 0;
 	dst = rlebuf;
 	rgbmask = ~surface->format->Amask;
 	ckey = surface->format->colorkey & rgbmask;
@@ -1344,14 +1726,14 @@ static int RLEColorkeySurface(SDL_Surface *surface)
 		}
 		len = MIN(run, maxn);
 		ADD_COUNTS(skip, len);
-		memcpy(dst, srcbuf + runstart * bpp, len * bpp);
+		SDL_memcpy(dst, srcbuf + runstart * bpp, len * bpp);
 		dst += len * bpp;
 		run -= len;
 		runstart += len;
 		while(run) {
 		    len = MIN(run, maxn);
 		    ADD_COUNTS(0, len);
-		    memcpy(dst, srcbuf + runstart * bpp, len * bpp);
+		    SDL_memcpy(dst, srcbuf + runstart * bpp, len * bpp);
 		    dst += len * bpp;
 		    runstart += len;
 		    run -= len;
@@ -1370,14 +1752,14 @@ static int RLEColorkeySurface(SDL_Surface *surface)
 	/* Now that we have it encoded, release the original pixels */
 	if((surface->flags & SDL_PREALLOC) != SDL_PREALLOC
 	   && (surface->flags & SDL_HWSURFACE) != SDL_HWSURFACE) {
-	    free( surface->pixels );
+	    SDL_free( surface->pixels );
 	    surface->pixels = NULL;
 	}
 
 	/* realloc the buffer to release unused memory */
 	{
 	    /* If realloc returns NULL, the original block is left intact */
-	    Uint8 *p = realloc(rlebuf, dst - rlebuf);
+	    Uint8 *p = SDL_realloc(rlebuf, dst - rlebuf);
 	    if(!p)
 		p = rlebuf;
 	    surface->map->sw_data->aux_data = p;
@@ -1438,7 +1820,7 @@ int SDL_RLESurface(SDL_Surface *surface)
  * completely transparent pixels will be lost, and colour and alpha depth
  * may have been reduced (when encoding for 16bpp targets).
  */
-static void UnRLEAlpha(SDL_Surface *surface)
+static SDL_bool UnRLEAlpha(SDL_Surface *surface)
 {
     Uint8 *srcbuf;
     Uint32 *dst;
@@ -1458,9 +1840,12 @@ static void UnRLEAlpha(SDL_Surface *surface)
 	uncopy_opaque = uncopy_transl = uncopy_32;
     }
 
-    surface->pixels = malloc(surface->h * surface->pitch);
+    surface->pixels = SDL_malloc(surface->h * surface->pitch);
+    if ( !surface->pixels ) {
+        return(SDL_FALSE);
+    }
     /* fill background with transparent pixels */
-    memset(surface->pixels, 0, surface->h * surface->pitch);
+    SDL_memset(surface->pixels, 0, surface->h * surface->pitch);
 
     dst = surface->pixels;
     srcbuf = (Uint8 *)(df + 1);
@@ -1482,12 +1867,12 @@ static void UnRLEAlpha(SDL_Surface *surface)
 		srcbuf += uncopy_opaque(dst + ofs, srcbuf, run, df, sf);
 		ofs += run;
 	    } else if(!ofs)
-		return;
+		return(SDL_TRUE);
 	} while(ofs < w);
 
 	/* skip padding if needed */
 	if(bpp == 2)
-	    srcbuf += (unsigned long)srcbuf & 2;
+	    srcbuf += (uintptr_t)srcbuf & 2;
 	
 	/* copy translucent pixels */
 	ofs = 0;
@@ -1503,6 +1888,8 @@ static void UnRLEAlpha(SDL_Surface *surface)
 	} while(ofs < w);
 	dst += surface->pitch >> 2;
     }
+    /* Make the compiler happy */
+    return(SDL_TRUE);
 }
 
 void SDL_UnRLESurface(SDL_Surface *surface, int recode)
@@ -1517,7 +1904,12 @@ void SDL_UnRLESurface(SDL_Surface *surface, int recode)
 		unsigned alpha_flag;
 
 		/* re-create the original surface */
-		surface->pixels = malloc(surface->h * surface->pitch);
+		surface->pixels = SDL_malloc(surface->h * surface->pitch);
+		if ( !surface->pixels ) {
+			/* Oh crap... */
+			surface->flags |= SDL_RLEACCEL;
+			return;
+		}
 
 		/* fill it with the background colour */
 		SDL_FillRect(surface, NULL, surface->format->colorkey);
@@ -1530,12 +1922,17 @@ void SDL_UnRLESurface(SDL_Surface *surface, int recode)
 		surface->flags &= ~SDL_SRCALPHA; /* opaque blit */
 		SDL_RLEBlit(surface, &full, surface, &full);
 		surface->flags |= alpha_flag;
-	    } else
-		UnRLEAlpha(surface);
+	    } else {
+		if ( !UnRLEAlpha(surface) ) {
+		    /* Oh crap... */
+		    surface->flags |= SDL_RLEACCEL;
+		    return;
+		}
+	    }
 	}
 
 	if ( surface->map && surface->map->sw_data->aux_data ) {
-	    free(surface->map->sw_data->aux_data);
+	    SDL_free(surface->map->sw_data->aux_data);
 	    surface->map->sw_data->aux_data = NULL;
 	}
     }

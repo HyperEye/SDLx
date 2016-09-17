@@ -193,7 +193,7 @@
 				RelativePath="common.c">
 			</File>
 			<File
-				RelativePath="controls.c">
+				RelativePath=".\ctrlmode.c">
 			</File>
 			<File
 				RelativePath="filter.c">
@@ -239,7 +239,7 @@
 				RelativePath="config.h">
 			</File>
 			<File
-				RelativePath="controls.h">
+				RelativePath=".\ctrlmode.h">
 			</File>
 			<File
 				RelativePath="filter.h">

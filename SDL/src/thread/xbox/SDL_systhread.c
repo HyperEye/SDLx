@@ -34,6 +34,7 @@ static char rcsid =
 #include "SDL_error.h"
 #include "SDL_thread.h"
 #include "SDL_systhread.h"
+#include "SDL_thread_c.h"
 
 
 static DWORD WINAPI RunThread(LPVOID data)

@@ -3,25 +3,15 @@
     Copyright (C) 1995 Tuukka Toivonen <toivonen@clinet.fi>
 
     This program is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 2 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
-    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-*/
+    it under the terms of the Perl Artistic License, available in COPYING.
+ */
 
 /* This is for use with the SDL library */
 #define SDL
-#if (defined(WIN32) || defined(_WIN32)) && !defined(__WIN32__)
-#define __WIN32__
-#endif
+#include "SDL_config.h"
+#include "SDL_endian.h"
+
+#define TIMIDITY_ERROR_SIZE 1024
 
 /* When a patch file can't be opened, one of these extensions is
    appended to the filename and the open is tried again.
@@ -36,7 +26,7 @@
    On the other hand, some files know that 16 is not a drum channel and
    try to play music on it. This is now a runtime option, so this isn't
    a critical choice anymore. */
-#define DEFAULT_DRUMCHANNELS ((1<<9) | (1<<15))
+#define DEFAULT_DRUMCHANNELS (1<<9)
 
 /* A somewhat arbitrary frequency range. The low end of this will
    sound terrible as no lowpass filtering is performed on most
@@ -45,13 +35,20 @@
 #define MAX_OUTPUT_RATE 	65000
 
 /* In percent. */
-#define DEFAULT_AMPLIFICATION 	70
+/* #define DEFAULT_AMPLIFICATION 	70 */
+/* #define DEFAULT_AMPLIFICATION 	50 */
+#define DEFAULT_AMPLIFICATION 	30
 
 /* Default sampling rate, default polyphony, and maximum polyphony.
    All but the last can be overridden from the command line. */
 #define DEFAULT_RATE	32000
-#define DEFAULT_VOICES	32
-#define MAX_VOICES	48
+/* #define DEFAULT_VOICES	32 */
+/* #define MAX_VOICES	48 */
+#define DEFAULT_VOICES	256
+#define MAX_VOICES	256
+#define MAXCHAN		16
+/* #define MAXCHAN		64 */
+#define MAXNOTE		128
 
 /* 1000 here will give a control ratio of 22:1 with 22 kHz output.
    Higher CONTROLS_PER_SECOND values allow more accurate rendering
@@ -79,7 +76,7 @@
 /* Make envelopes twice as fast. Saves ~20% CPU time (notes decay
    faster) and sounds more like a GUS. There is now a command line
    option to toggle this as well. */
-#define FAST_DECAY
+/* #define FAST_DECAY */
 
 /* How many bits to use for the fractional part of sample positions.
    This affects tonal accuracy. The entire position counter must fit
@@ -88,6 +85,10 @@
    by with just 9 bits and a little help from its friends...
    "The GUS does not SUCK!!!" -- a happy user :) */
 #define FRACTION_BITS 12
+
+#define MAX_SAMPLE_SIZE (1 << (32-FRACTION_BITS))
+
+typedef double FLOAT_T;
 
 /* For some reason the sample volume is always set to maximum in all
    patch files. Define this for a crude adjustment that may help
@@ -127,55 +128,8 @@
 /* This is enforced by some computations that must fit in an int */
 #define MAX_CONTROL_RATIO 255
 
-/* Byte order, defined in <machine/endian.h> for FreeBSD and DEC OSF/1 */
-#ifdef DEC
-#include <machine/endian.h>
-#endif
-
-#ifdef linux
-/*
- * Byte order is defined in <bytesex.h> as __BYTE_ORDER, that need to
- * be checked against __LITTLE_ENDIAN and __BIG_ENDIAN defined in <endian.h>
- * <endian.h> includes automagically <bytesex.h>
- * for Linux.
- */
-#include <endian.h>
-
-/*
- * We undef the two things to start with a clean situation
- * (oddly enough, <endian.h> defines under certain conditions
- * the two things below, as __LITTLE_ENDIAN and __BIG_ENDIAN, that
- * are useless for our plans)
- */
-#undef LITTLE_ENDIAN
-#undef BIG_ENDIAN
-
-# if __BYTE_ORDER == __LITTLE_ENDIAN
-#  define LITTLE_ENDIAN
-# elif __BYTE_ORDER == __BIG_ENDIAN
-#  define BIG_ENDIAN
-# else
-# error No byte sex defined
-# endif
-#endif /* linux */
-
-/* Win32 on Intel machines */
-#ifdef __WIN32__
-#  define LITTLE_ENDIAN
-#endif
-
-#ifdef i386
-#define LITTLE_ENDIAN
-#endif
-
-/* DEC MMS has 64 bit long words */
-#ifdef DEC
 typedef unsigned int uint32;
 typedef int int32; 
-#else
-typedef unsigned long uint32;
-typedef long int32; 
-#endif
 typedef unsigned short uint16;
 typedef short int16;
 typedef unsigned char uint8;
@@ -190,7 +144,7 @@ typedef char int8;
 		      (((x)&0xFF0000)>>8) | \
 		      (((x)>>24)&0xFF))
 
-#ifdef LITTLE_ENDIAN
+#if SDL_BYTEORDER == SDL_LIL_ENDIAN
 #define LE_SHORT(x) x
 #define LE_LONG(x) x
 #define BE_SHORT(x) XCHG_SHORT(x)
@@ -207,10 +161,14 @@ typedef char int8;
 /* You could specify a complete path, e.g. "/etc/timidity.cfg", and
    then specify the library directory in the configuration file. */
 #define CONFIG_FILE	"D:\\timidity.cfg"
-#ifdef __WIN32__
+#define CONFIG_FILE_ETC "/etc/timidity.cfg"
+#if defined(__WIN32__) || defined(__OS2__)
 #define DEFAULT_PATH	"D:\\TIMIDITY"
 #else
-#define DEFAULT_PATH	"/usr/local/lib/timidity"
+#define DEFAULT_PATH	"/etc/timidity"
+#define DEFAULT_PATH1	"/usr/share/timidity"
+#define DEFAULT_PATH2	"/usr/local/share/timidity"
+#define DEFAULT_PATH3	"/usr/local/lib/timidity"
 #endif
 
 /* These affect general volume */
@@ -229,6 +187,8 @@ typedef char int8;
 #  define FINAL_VOLUME(v) (v)
 #  define MAX_AMP_VALUE ((1<<(AMP_BITS+1))-1)
 #endif
+
+typedef int16 resample_t;
 
 #ifdef USE_LDEXP
 #  define FSCALE(a,b) ldexp((a),(b))
@@ -255,7 +215,7 @@ typedef char int8;
 #endif
 
 /* The path separator (D.M.) */
-#ifdef __WIN32__
+#if defined(__WIN32__) || defined(__OS2__)
 #  define PATH_SEP '\\'
 #  define PATH_STRING "\\"
 #else

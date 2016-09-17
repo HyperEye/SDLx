@@ -21,7 +21,7 @@
 				Optimization="0"
 				OptimizeForProcessor="2"
 				AdditionalIncludeDirectories="SDL\include;mikmod;timidity;smpeg;vorbis\include;SDL;SDL\src\thread\xbox;SDL\src\thread;SDL\src\audio;SDL\src\timer;SDL\src\events;SDL\src\video;SDL\src\cdrom;SDL\src\joystick"
-				PreprocessorDefinitions="_DEBUG;_XBOX;_LIB;_WINDOWS;WIN32;WAV_MUSIC;MOD_MUSIC;MID_MUSIC;CMD_MUSIC;USE_TIMIDITY_MIDI;ENABLE_DIRECTX;USE_RWOPS;NO_SIGNAL_H;OGG_MUSIC;MP3_MUSIC"
+				PreprocessorDefinitions="_DEBUG;_XBOX;_LIB;_WINDOWS;WIN32;WAV_MUSIC;MOD_MUSIC;MID_MUSIC;USE_TIMIDITY_MIDI;ENABLE_DIRECTX;USE_RWOPS;NO_SIGNAL_H;OGG_MUSIC;MP3_MUSIC"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -131,7 +131,7 @@
 				OmitFramePointers="TRUE"
 				OptimizeForProcessor="2"
 				AdditionalIncludeDirectories="SDL\include;smpeg;timidity;mikmod;vorbis\include;SDL;SDL\src\thread\xbox;SDL\src\thread;SDL\src\audio;SDL\src\timer;SDL\src\events;SDL\src\video;SDL\src\cdrom;SDL\src\joystick"
-				PreprocessorDefinitions="NDEBUG;_XBOX;_LIB;_WINDOWS;WIN32;WAV_MUSIC;MOD_MUSIC;MID_MUSIC;USE_TIMIDITY_MIDI;ENABLE_DIRECTX;NO_SIGNAL_H;OGG_MUSIC;MP3_MUSIC"
+				PreprocessorDefinitions="NDEBUG;_XBOX;_LIB;_WINDOWS;WIN32;WAV_MUSIC;MOD_MUSIC;MID_MUSIC;USE_TIMIDITY_MIDI;ENABLE_DIRECTX;NO_SIGNAL_H;OGG_MUSIC;MP3_MUSIC;USE_RWOPS"
 				StringPooling="TRUE"
 				RuntimeLibrary="0"
 				BufferSecurityCheck="FALSE"
@@ -239,13 +239,19 @@
 				Name="SDL"
 				Filter="">
 				<File
-					RelativePath="SDL\SDL.c">
+					RelativePath=".\Sdl\src\SDL.c">
 				</File>
 				<File
-					RelativePath="SDL\SDL_error.c">
+					RelativePath=".\Sdl\src\SDL_error.c">
 				</File>
 				<File
-					RelativePath="SDL\SDL_fatal.c">
+					RelativePath=".\Sdl\src\SDL_error_c.h">
+				</File>
+				<File
+					RelativePath=".\Sdl\src\SDL_fatal.c">
+				</File>
+				<File
+					RelativePath=".\Sdl\src\SDL_fatal.h">
 				</File>
 				<Filter
 					Name="audio"
@@ -257,10 +263,22 @@
 						RelativePath="SDL\src\audio\SDL_audiocvt.c">
 					</File>
 					<File
+						RelativePath=".\Sdl\src\audio\SDL_audiodev.c">
+					</File>
+					<File
 						RelativePath="SDL\src\audio\SDL_audiomem.c">
 					</File>
 					<File
 						RelativePath="SDL\src\audio\SDL_mixer.c">
+					</File>
+					<File
+						RelativePath=".\Sdl\src\audio\SDL_mixer_m68k.c">
+					</File>
+					<File
+						RelativePath=".\Sdl\src\audio\SDL_mixer_MMX.c">
+					</File>
+					<File
+						RelativePath=".\Sdl\src\audio\SDL_mixer_MMX_VC.c">
 					</File>
 					<File
 						RelativePath="SDL\src\audio\SDL_wave.c">
@@ -292,7 +310,7 @@
 							RelativePath="SDL\src\thread\xbox\SDL_syssem.c">
 						</File>
 						<File
-							RelativePath="SDL\src\thread\xbox\SDL_systhread.c">
+							RelativePath=".\Sdl\src\thread\xbox\SDL_systhread.c">
 						</File>
 					</Filter>
 				</Filter>
@@ -399,6 +417,9 @@
 						RelativePath="SDL\src\events\SDL_events.c">
 					</File>
 					<File
+						RelativePath=".\Sdl\src\events\SDL_events_c.h">
+					</File>
+					<File
 						RelativePath="SDL\src\events\SDL_expose.c">
 					</File>
 					<File
@@ -442,42 +463,107 @@
 						</File>
 					</Filter>
 				</Filter>
+				<Filter
+					Name="stdlib"
+					Filter="">
+					<File
+						RelativePath=".\Sdl\src\stdlib\SDL_getenv.c">
+					</File>
+					<File
+						RelativePath=".\Sdl\src\stdlib\SDL_iconv.c">
+					</File>
+					<File
+						RelativePath=".\Sdl\src\stdlib\SDL_malloc.c">
+					</File>
+					<File
+						RelativePath=".\Sdl\src\stdlib\SDL_qsort.c">
+					</File>
+					<File
+						RelativePath=".\Sdl\src\stdlib\SDL_stdlib.c">
+					</File>
+					<File
+						RelativePath=".\Sdl\src\stdlib\SDL_string.c">
+					</File>
+				</Filter>
+				<Filter
+					Name="cpuinfo"
+					Filter="">
+					<File
+						RelativePath=".\Sdl\src\cpuinfo\SDL_cpuinfo.c">
+					</File>
+				</Filter>
 			</Filter>
 			<Filter
 				Name="SDLmixer"
 				Filter="">
 				<File
-					RelativePath="effect_position.c">
+					RelativePath=".\SDL_Mixer\dynamic_flac.c">
 				</File>
 				<File
-					RelativePath="effect_stereoreverse.c">
+					RelativePath=".\SDL_Mixer\dynamic_fluidsynth.c">
 				</File>
 				<File
-					RelativePath="effects_internal.c">
+					RelativePath=".\SDL_Mixer\dynamic_mod.c">
 				</File>
 				<File
-					RelativePath="load_aiff.c">
+					RelativePath=".\SDL_Mixer\dynamic_mp3.c">
 				</File>
 				<File
-					RelativePath="load_ogg.c">
+					RelativePath=".\SDL_Mixer\dynamic_ogg.c">
 				</File>
 				<File
-					RelativePath="load_voc.c">
+					RelativePath=".\SDL_Mixer\effect_position.c">
 				</File>
 				<File
-					RelativePath="mixer.c">
+					RelativePath=".\SDL_Mixer\effect_stereoreverse.c">
 				</File>
 				<File
-					RelativePath="music.c">
+					RelativePath=".\SDL_Mixer\effects_internal.c">
 				</File>
 				<File
-					RelativePath="music_cmd.c">
+					RelativePath=".\SDL_Mixer\load_aiff.c">
 				</File>
 				<File
-					RelativePath="music_ogg.c">
+					RelativePath=".\SDL_Mixer\load_flac.c">
 				</File>
 				<File
-					RelativePath="wavestream.c">
+					RelativePath=".\SDL_Mixer\load_ogg.c">
+				</File>
+				<File
+					RelativePath=".\SDL_Mixer\load_voc.c">
+				</File>
+				<File
+					RelativePath=".\SDL_Mixer\mixer.c">
+				</File>
+				<File
+					RelativePath=".\SDL_Mixer\music.c">
+				</File>
+				<File
+					RelativePath=".\SDL_Mixer\music_cmd.c">
+				</File>
+				<File
+					RelativePath=".\SDL_Mixer\music_flac.c">
+				</File>
+				<File
+					RelativePath=".\SDL_Mixer\music_mad.c">
+				</File>
+				<File
+					RelativePath=".\SDL_Mixer\music_mod.c">
+				</File>
+				<File
+					RelativePath=".\SDL_Mixer\music_modplug.c">
+				</File>
+				<File
+					RelativePath=".\SDL_Mixer\music_ogg.c">
+				</File>
+				<File
+					RelativePath=".\SDL_Mixer\playmus.c">
+				</File>
+				<File
+					RelativePath=".\SDL_Mixer\playwave.c">
+				</File>
+				<File
+					RelativePath=".\SDL_Mixer\wavestream.c">
 				</File>
 			</Filter>
 			<Filter
@@ -520,6 +606,12 @@
 			</File>
 			<File
 				RelativePath=".\Sdl\include\SDL_cdrom.h">
+			</File>
+			<File
+				RelativePath=".\Sdl\include\SDL_config.h">
+			</File>
+			<File
+				RelativePath=".\Sdl\include\SDL_config_xbox.h">
 			</File>
 			<File
 				RelativePath=".\Sdl\include\SDL_endian.h">
